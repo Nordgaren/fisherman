@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types)]
 
 use crate::hook::hook_util::{get_imported_function_index, get_imported_module_index};
-use std::ffi::{c_char, c_void, CStr, CString};
+use std::ffi::{c_char, c_void, CStr};
 use std::mem::size_of;
 use std::ptr::addr_of_mut;
 use windows_sys::Win32::System::Diagnostics::Debug::{

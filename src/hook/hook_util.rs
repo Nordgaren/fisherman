@@ -1,4 +1,3 @@
-use std::ffi::{c_char, CStr};
 use std::ptr::addr_of;
 use windows_sys::Win32::System::SystemServices::{IMAGE_IMPORT_BY_NAME, IMAGE_IMPORT_DESCRIPTOR};
 use crate::util::strlen_with_null;
@@ -30,10 +29,4 @@ pub(super) unsafe fn get_imported_module_index(base_address: usize, import_addre
     }
 
     usize::MAX
-}
-
-pub(super) fn enforce_null_terminated_character(string: &mut String) {
-    if !string.ends_with('\0') {
-        string.push('\0');
-    }
 }

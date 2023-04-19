@@ -2,15 +2,15 @@
 // HAS NOT BEEN TESTED, YET!
 
 use crate::util::{copy_buffer, strlen, zero_memory};
-use std::{mem, slice};
-use std::ffi::{c_void, CString};
+use std::mem;
+use std::ffi::c_void;
 use std::ptr::{addr_of, addr_of_mut};
 #[cfg(target_arch = "x86")]
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32;
 #[cfg(target_arch = "x86_64")]
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64;
 use windows_sys::Win32::System::Diagnostics::Debug::{
-    ImageDirectoryEntryToDataEx, IMAGE_DIRECTORY_ENTRY_EXPORT,
+    IMAGE_DIRECTORY_ENTRY_EXPORT,
 };
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 use windows_sys::Win32::System::Memory::{PAGE_READWRITE, VirtualProtect};
@@ -34,14 +34,14 @@ impl EATHook {
         let dos_header: &'static IMAGE_DOS_HEADER = mem::transmute(base_address);
         let nt_headers: &'static mut IMAGE_NT_HEADERS =
             mem::transmute(base_address + dos_header.e_lfanew as usize);
-        let mut optional_header = &mut nt_headers.OptionalHeader;
+        let optional_header = &mut nt_headers.OptionalHeader;
         let mut export_data_directory =
             &mut optional_header.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT as usize];
         let export_directory: &'static IMAGE_EXPORT_DIRECTORY =
             mem::transmute(base_address + export_data_directory.VirtualAddress as usize);
 
         let eat_address = base_address + export_directory.AddressOfFunctions as usize;
-        let mut eat_array = core::slice::from_raw_parts_mut(
+        let eat_array = core::slice::from_raw_parts_mut(
             eat_address as *mut u32,
             export_directory.NumberOfFunctions as usize,
         );
@@ -94,14 +94,14 @@ impl EATHook {
         let dos_header: &'static IMAGE_DOS_HEADER = mem::transmute(base_address);
         let nt_headers: &'static mut IMAGE_NT_HEADERS =
             mem::transmute(base_address + dos_header.e_lfanew as usize);
-        let mut optional_header = &mut nt_headers.OptionalHeader;
+        let optional_header = &mut nt_headers.OptionalHeader;
         let mut export_data_directory =
             &mut optional_header.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT as usize];
         let export_directory: &'static IMAGE_EXPORT_DIRECTORY =
             mem::transmute(base_address + export_data_directory.VirtualAddress as usize);
 
         let eat_address = base_address + export_directory.AddressOfFunctions as usize;
-        let mut eat_array = core::slice::from_raw_parts_mut(
+        let eat_array = core::slice::from_raw_parts_mut(
             eat_address as *mut u32,
             export_directory.NumberOfFunctions as usize,
         );

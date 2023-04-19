@@ -97,6 +97,12 @@ pub unsafe fn GetProcAddressInternal(base_address: usize, proc_name: &[u8]) -> u
     proc_address
 }
 
+pub(super) fn enforce_null_terminated_character(string: &mut String) {
+    if !string.ends_with('\0') {
+        string.push('\0');
+    }
+}
+
 // Need internal function for this in unmapped PE state.
 pub fn strlen(s: *const u8) -> usize {
     let mut len = 0;

@@ -4,10 +4,10 @@ use crate::hook::eat::EATHook;
 use crate::hook::inline::InlineHook;
 
 pub mod builder;
-mod iat;
-mod hook_util;
-mod eat;
-mod inline;
+pub mod iat;
+pub mod hook_util;
+pub mod eat;
+pub mod inline;
 
 pub struct Hook {
     eat_hooks: Vec<EATHook>,

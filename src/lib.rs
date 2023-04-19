@@ -1,5 +1,6 @@
 pub mod hook;
 mod util;
+mod scanner;
 
 #[allow(non_snake_case)]
 #[cfg(test)]
@@ -11,6 +12,7 @@ mod tests {
     use windows_sys::core::PCSTR;
     use windows_sys::Win32::Foundation::{FARPROC, HMODULE};
     use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
+    use crate::scanner::signature::Signature;
 
     pub unsafe extern "system" fn get_proc_address_hook(
         module_handle: HMODULE,
@@ -55,7 +57,7 @@ mod tests {
                 "LoadLibraryA\0".as_ptr(),
             )
             .unwrap();
-            let mut hook = HookBuilder::new()
+            let hook = HookBuilder::new()
                 .add_iat_hook(
                     "KERNEL32.dll",
                     "GetProcAddress",
@@ -71,5 +73,10 @@ mod tests {
 
             assert_eq!(original as usize, hooked as usize)
         }
+    }
+
+    #[test]
+    fn lol() {
+        let hook = HookBuilder::new().add_inline_hook("", Signature::from_ida_pattern(""), 0);
     }
 }
