@@ -1,19 +1,26 @@
+#![allow(non_camel_case_types)]
+
 use std::mem;
+use std::mem::size_of;
 use std::ptr::addr_of;
 use windows_sys::Win32::Foundation::MAX_PATH;
-use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_DIRECTORY_ENTRY_EXPORT, IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64};
+use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_DIRECTORY_ENTRY_EXPORT;
+#[cfg(target_arch = "x86_64")]
+use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64;
+#[cfg(target_arch = "x86")]
+use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32;
 use windows_sys::Win32::System::LibraryLoader::LoadLibraryA;
 use windows_sys::Win32::System::SystemServices::{IMAGE_DOS_HEADER, IMAGE_EXPORT_DIRECTORY};
 
-#[cfg(target_arch = "x86_64")]
-type IMAGE_NT_HEADER = IMAGE_NT_HEADERS64;
-#[cfg(target_arch = "x86")]
-type IMAGE_NT_HEADER = IMAGE_NT_HEADERS32;
 
+#[cfg(target_arch = "x86_64")]
+type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64;
+#[cfg(target_arch = "x86")]
+type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS32;
 
 pub unsafe fn GetProcAddressInternal(base_address: usize, proc_name: &[u8]) -> usize {
     let dos_header: &'static IMAGE_DOS_HEADER = mem::transmute(base_address);
-    let nt_headers: &'static IMAGE_NT_HEADER =
+    let nt_headers: &'static IMAGE_NT_HEADERS =
         mem::transmute(base_address + dos_header.e_lfanew as usize);
     let optional_header = &nt_headers.OptionalHeader;
     let export_data_directory =
@@ -28,7 +35,7 @@ pub unsafe fn GetProcAddressInternal(base_address: usize, proc_name: &[u8]) -> u
     );
 
     let mut proc_address = 0;
-    let ordinal_test = (proc_name.as_ptr() as *const u32);
+    let ordinal_test = proc_name.as_ptr() as *const u32;
     if proc_name.len() >= 4 && *ordinal_test >> 16 == 0 {
         let ordinal = *ordinal_test;
         let base = export_directory.Base;
@@ -72,10 +79,9 @@ pub unsafe fn GetProcAddressInternal(base_address: usize, proc_name: &[u8]) -> u
             .to_vec()).unwrap();
 
         let split_pos = match forward_dll.find('.') {
-            None => { 0 }
-            Some(s) => { s }
+            Some(pos) => { pos }
+            _ => { return 0 }
         };
-
         forward_dll = forward_dll.replace(".", "\0");
 
         let forward_handle = LoadLibraryA(forward_dll.as_ptr()) as usize;
@@ -119,4 +125,24 @@ pub fn strlenw(s: *const u16) -> usize {
 #[inline(always)]
 pub fn strlenw_with_null(s: *const u16) -> usize {
     strlenw(s) + 1
+}
+
+// Because you can't use the normal rust copy function in an unmapped PE, for some reason.
+pub unsafe fn copy_buffer<T>(src: *const T, dst: *mut T, len: usize) {
+    let total_size = size_of::<T>() * len;
+    let src_slice = core::slice::from_raw_parts(src as *const u8, total_size);
+    let dst_slice = core::slice::from_raw_parts_mut(dst as *mut u8, total_size);
+
+    for i in 0..total_size {
+        dst_slice[i] = src_slice[i];
+    }
+}
+
+pub unsafe fn zero_memory<T>(buffer: *mut T, len: usize) {
+    let total_size = size_of::<T>() * len;
+    let dst_slice = core::slice::from_raw_parts_mut(buffer as *mut u8, total_size);
+
+    for i in 0..total_size {
+        dst_slice[i] = 0;
+    }
 }

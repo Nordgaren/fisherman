@@ -1,12 +1,18 @@
 use crate::hook::iat::IATHook;
 use std::collections::HashMap;
+use crate::hook::eat::EATHook;
+use crate::hook::inline::InlineHook;
 
 pub mod builder;
 mod iat;
-mod util;
+mod hook_util;
+mod eat;
+mod inline;
 
 pub struct Hook {
+    eat_hooks: Vec<EATHook>,
     iat_hooks: Vec<IATHook>,
+    inline_hooks: Vec<InlineHook>,
     proc_addr_hooks: HashMap<&'static [u8], usize>,
 }
 
