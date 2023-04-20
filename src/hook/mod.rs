@@ -2,6 +2,7 @@ use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
 use std::collections::HashMap;
+use minhook_sys::MH_Initialize;
 
 pub mod builder;
 pub mod eat;
@@ -25,6 +26,12 @@ impl Hook {
                 print!("Hook succeeded!\n");
             } else {
                 print!("Hook failed!\n");
+            }
+        }
+
+        if !self.inline_hooks.is_empty() {
+            unsafe {
+                MH_Initialize();
             }
         }
         for inline_hooks in &mut self.inline_hooks {

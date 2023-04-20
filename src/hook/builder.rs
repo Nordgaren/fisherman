@@ -73,9 +73,6 @@ impl HookBuilder {
         self
     }
     pub fn build(mut self) -> Hook {
-        unsafe {
-            MH_Initialize();
-        }
         self.hook.hook();
 
         self.hook
