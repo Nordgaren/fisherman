@@ -1,5 +1,5 @@
 use crate::scanner::signature::FuncAddr;
-use minhook_sys::{MH_CreateHook, MH_EnableHook};
+use minhook_sys::{MH_CreateHook, MH_EnableHook, MH_OK};
 use std::ffi::c_void;
 use std::mem;
 use std::ptr::addr_of;
@@ -13,16 +13,15 @@ pub struct InlineHook {
 impl InlineHook {
     pub fn hook(&mut self) -> bool {
         unsafe {
-            let mut return_address = 0 as *mut c_void;
-            MH_CreateHook(
+            if MH_CreateHook(
                 self.function_address as *mut c_void,
                 self.hook_address as *mut c_void,
-                &mut return_address,
-            );
-            *(self.return_address as *mut usize) = return_address as usize;
+                mem::transmute(self.return_address as *mut usize),
+            ) != MH_OK {
+                return false;
+            };
 
-            MH_EnableHook(self.function_address as *mut c_void);
+            MH_EnableHook(self.function_address as *mut c_void) == MH_OK
         }
-        true
     }
 }

@@ -19,7 +19,7 @@ mod tests {
         proc_name: PCSTR,
     ) -> FARPROC {
         let c_string = CStr::from_ptr(proc_name as *const c_char);
-        println!("[+] GetProcAddress function: {:?}", c_string);
+        println!("[++] GetProcAddress function: {:?}", c_string);
         // if you keep a static reference to your hook around, you can hook functions called via
         // GetProcAddress, here.
         // if let Some(hook) = &HOOK {
@@ -39,7 +39,7 @@ mod tests {
 
     pub unsafe extern "system" fn load_library_a_hook(module_name: PCSTR) -> HMODULE {
         let c_string = CStr::from_ptr(module_name as *const c_char);
-        println!("[+] LoadLibraryA module: {:?}", c_string);
+        println!("[++] LoadLibraryA module: {:?}", c_string);
 
         // return back to LoadLibraryA
         let loadLibraryA: fn(PCSTR) -> HMODULE = mem::transmute(GetProcAddress(
