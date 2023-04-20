@@ -1,4 +1,3 @@
-use std::mem;
 use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
@@ -6,6 +5,7 @@ use crate::hook::Hook;
 use crate::scanner::signature::FuncAddr;
 use crate::util::enforce_null_terminated_character;
 use minhook_sys::MH_Initialize;
+use std::mem;
 
 pub struct HookBuilder {
     hook: Hook,
@@ -56,7 +56,7 @@ impl HookBuilder {
         mut self,
         function_address: impl FuncAddr,
         hook_address: usize,
-        return_address: &mut T
+        return_address: &mut T,
     ) -> Self {
         unsafe {
             self.hook.inline_hooks.push(InlineHook {

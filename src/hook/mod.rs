@@ -1,8 +1,8 @@
 use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
-use std::collections::HashMap;
 use minhook_sys::MH_Initialize;
+use std::collections::HashMap;
 
 pub mod builder;
 pub mod eat;
@@ -34,7 +34,10 @@ impl Hook {
             }
         }
         for inline_hooks in &mut self.inline_hooks {
-            print!("[+] Hooking function @ {:X} ", inline_hooks.function_address);
+            print!(
+                "[+] Hooking function @ {:X} ",
+                inline_hooks.function_address
+            );
 
             if unsafe { inline_hooks.hook() } {
                 print!("Hook succeeded!\n");
@@ -55,7 +58,7 @@ impl Hook {
             }
         }
         for inline_hook in &self.inline_hooks {
-            print!("[-] Unhooking function @ {} ", inline_hook.function);
+            print!("[-] Unhooking function @ {} ", inline_hook.function_address);
 
             if unsafe { inline_hook.unhook() } {
                 print!("Unhooking succeeded!\n");

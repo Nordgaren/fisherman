@@ -147,13 +147,13 @@ impl IATHook {
 #[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
+    use crate::hook::builder::HookBuilder;
+    use crate::util::GetProcAddressInternal;
     use std::ffi::{c_char, CStr};
     use std::mem;
     use windows_sys::core::PCSTR;
     use windows_sys::Win32::Foundation::{FARPROC, HMODULE};
     use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
-    use crate::hook::builder::HookBuilder;
-    use crate::util::GetProcAddressInternal;
 
     pub unsafe extern "system" fn get_proc_address_hook(
         module_handle: HMODULE,
@@ -185,7 +185,7 @@ mod tests {
                 GetModuleHandleA("kernel32.dll\0".as_ptr()),
                 "GetProcAddress\0".as_ptr(),
             )
-                .unwrap();
+            .unwrap();
             let hook = HookBuilder::new()
                 .add_iat_hook(
                     "KERNEL32.dll",
@@ -193,7 +193,6 @@ mod tests {
                     get_proc_address_hook as usize,
                 )
                 .build();
-
 
             assert_eq!(original as usize, hook.iat_hooks[0].original_address)
         }

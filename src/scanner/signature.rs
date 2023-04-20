@@ -27,6 +27,7 @@ pub struct Signature {
     pub length: usize,
 }
 
+// TY Chainfailure for your from_ida_pattern method in your AoB scanner for Broadsword!
 impl Signature {
     pub fn from_ida_pattern(pattern: &str) -> Result<Self, ()> {
         let mut signature = Vec::new();
