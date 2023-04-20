@@ -1,18 +1,18 @@
 pub mod hook;
-mod util;
 mod scanner;
+mod util;
 
 #[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
     use crate::hook::builder::HookBuilder;
+    use crate::scanner::signature::Signature;
     use crate::util::GetProcAddressInternal;
     use std::ffi::{c_char, CStr};
     use std::mem;
     use windows_sys::core::PCSTR;
     use windows_sys::Win32::Foundation::{FARPROC, HMODULE};
     use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
-    use crate::scanner::signature::Signature;
 
     pub unsafe extern "system" fn get_proc_address_hook(
         module_handle: HMODULE,
@@ -56,7 +56,7 @@ mod tests {
                 GetModuleHandleA("kernel32.dll\0".as_ptr()),
                 "LoadLibraryA\0".as_ptr(),
             )
-                .unwrap();
+            .unwrap();
             let hook = HookBuilder::new()
                 .add_iat_hook(
                     "KERNEL32.dll",
@@ -69,7 +69,7 @@ mod tests {
                 GetModuleHandleA("kernel32.dll\0".as_ptr()),
                 "LoadLibraryA\0".as_ptr(),
             )
-                .unwrap();
+            .unwrap();
 
             assert_eq!(original as usize, hooked as usize)
         }
@@ -89,10 +89,16 @@ mod tests {
     static mut og_some_func: extern "C" fn(usize) = hook_func;
 
     #[test]
-    fn lol() {
+    fn inline_hook() {
         unsafe {
             println!("\n{:X} {:X}", some_func as usize, hook_func as usize);
-            let mut hook = HookBuilder::new().add_inline_hook(some_func as usize, hook_func as usize, mem::transmute(&mut og_some_func)).build();
+            let mut hook = HookBuilder::new()
+                .add_inline_hook(
+                    some_func as usize,
+                    hook_func as usize,
+                    mem::transmute(&mut og_some_func),
+                )
+                .build();
             some_func(0x20);
         }
     }
