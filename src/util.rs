@@ -5,13 +5,12 @@ use std::mem::size_of;
 use std::ptr::addr_of;
 use windows_sys::Win32::Foundation::MAX_PATH;
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_DIRECTORY_ENTRY_EXPORT;
-#[cfg(target_arch = "x86_64")]
-use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64;
 #[cfg(target_arch = "x86")]
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32;
+#[cfg(target_arch = "x86_64")]
+use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64;
 use windows_sys::Win32::System::LibraryLoader::LoadLibraryA;
 use windows_sys::Win32::System::SystemServices::{IMAGE_DOS_HEADER, IMAGE_EXPORT_DIRECTORY};
-
 
 #[cfg(target_arch = "x86_64")]
 type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64;
@@ -75,12 +74,18 @@ pub unsafe fn GetProcAddressInternal(base_address: usize, proc_name: &[u8]) -> u
     if proc_address >= addr_of!(*export_directory) as usize
         && proc_address < addr_of!(*export_directory) as usize + export_data_directory.Size as usize
     {
-        let mut forward_dll = String::from_utf8(core::slice::from_raw_parts(proc_address as *const u8, strlen(proc_address as *const u8))
-            .to_vec()).unwrap();
+        let mut forward_dll = String::from_utf8(
+            core::slice::from_raw_parts(
+                proc_address as *const u8,
+                strlen(proc_address as *const u8),
+            )
+            .to_vec(),
+        )
+        .unwrap();
 
         let split_pos = match forward_dll.find('.') {
-            Some(pos) => { pos }
-            _ => { return 0 }
+            Some(pos) => pos,
+            _ => return 0,
         };
         forward_dll = forward_dll.replace(".", "\0");
 

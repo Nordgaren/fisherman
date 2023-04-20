@@ -1,12 +1,12 @@
-use crate::hook::iat::IATHook;
-use std::collections::HashMap;
 use crate::hook::eat::EATHook;
+use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
+use std::collections::HashMap;
 
 pub mod builder;
-pub mod iat;
-pub mod hook_util;
 pub mod eat;
+pub mod hook_util;
+pub mod iat;
 pub mod inline;
 
 pub struct Hook {

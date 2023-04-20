@@ -2,18 +2,16 @@
 // HAS NOT BEEN TESTED, YET!
 
 use crate::util::{copy_buffer, strlen, zero_memory};
-use std::mem;
 use std::ffi::c_void;
+use std::mem;
 use std::ptr::{addr_of, addr_of_mut};
+use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_DIRECTORY_ENTRY_EXPORT;
 #[cfg(target_arch = "x86")]
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32;
 #[cfg(target_arch = "x86_64")]
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64;
-use windows_sys::Win32::System::Diagnostics::Debug::{
-    IMAGE_DIRECTORY_ENTRY_EXPORT,
-};
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
-use windows_sys::Win32::System::Memory::{PAGE_READWRITE, VirtualProtect};
+use windows_sys::Win32::System::Memory::{VirtualProtect, PAGE_READWRITE};
 use windows_sys::Win32::System::SystemServices::{IMAGE_DOS_HEADER, IMAGE_EXPORT_DIRECTORY};
 
 #[cfg(target_arch = "x86_64")]
@@ -57,9 +55,13 @@ impl EATHook {
             let name = core::slice::from_raw_parts(string_address, strlen(string_address));
 
             if name == self.function.as_bytes() {
-
                 let mut protect = 0;
-                VirtualProtect(addr_of!(*export_directory) as *const c_void, export_data_directory.Size as usize, PAGE_READWRITE, addr_of_mut!(protect));
+                VirtualProtect(
+                    addr_of!(*export_directory) as *const c_void,
+                    export_data_directory.Size as usize,
+                    PAGE_READWRITE,
+                    addr_of_mut!(protect),
+                );
 
                 export_data_directory.Size += self.forward_string.len() as u32;
 
@@ -78,9 +80,18 @@ impl EATHook {
 
                 let mut protect = 0;
                 eat_array[hints_table[i] as usize] = (forward_ptr - base_address) as u32;
-                copy_buffer(self.forward_string.as_ptr(), forward_ptr as *mut u8, self.forward_string.len());
+                copy_buffer(
+                    self.forward_string.as_ptr(),
+                    forward_ptr as *mut u8,
+                    self.forward_string.len(),
+                );
 
-                VirtualProtect(addr_of!(*export_directory) as *const c_void, export_data_directory.Size as usize, protect, addr_of_mut!(protect));
+                VirtualProtect(
+                    addr_of!(*export_directory) as *const c_void,
+                    export_data_directory.Size as usize,
+                    protect,
+                    addr_of_mut!(protect),
+                );
 
                 return true;
             }
@@ -118,7 +129,12 @@ impl EATHook {
 
             if name == self.function.as_bytes() {
                 let mut protect = 0;
-                VirtualProtect(addr_of!(*export_directory) as *const c_void, export_data_directory.Size as usize, PAGE_READWRITE, addr_of_mut!(protect));
+                VirtualProtect(
+                    addr_of!(*export_directory) as *const c_void,
+                    export_data_directory.Size as usize,
+                    PAGE_READWRITE,
+                    addr_of_mut!(protect),
+                );
 
                 export_data_directory.Size -= self.forward_string.len() as u32;
 
@@ -133,12 +149,16 @@ impl EATHook {
                     + export_data_directory.VirtualAddress as usize
                     + export_data_directory.Size as usize;
 
-
                 let mut protect = 0;
                 eat_array[hints_table[i] as usize] = self.original_rva;
                 zero_memory(forward_ptr as *mut u8, self.forward_string.len());
 
-                VirtualProtect(addr_of!(*export_directory) as *const c_void, export_data_directory.Size as usize, protect, addr_of_mut!(protect));
+                VirtualProtect(
+                    addr_of!(*export_directory) as *const c_void,
+                    export_data_directory.Size as usize,
+                    protect,
+                    addr_of_mut!(protect),
+                );
 
                 return true;
             }

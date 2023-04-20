@@ -7,7 +7,9 @@ impl SimpleScanner {
         let mut position_in_pattern = 0;
 
         for (position, byte) in scannable.iter().enumerate() {
-            if pattern.mask[position_in_pattern] != 0 && pattern.signature[position_in_pattern] != *byte {
+            if pattern.mask[position_in_pattern] != 0
+                && pattern.signature[position_in_pattern] != *byte
+            {
                 position_in_pattern = 0;
                 continue;
             }
