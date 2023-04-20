@@ -10,10 +10,10 @@ pub mod eat;
 pub mod inline;
 
 pub struct Hook {
-    eat_hooks: Vec<EATHook>,
-    iat_hooks: Vec<IATHook>,
-    inline_hooks: Vec<InlineHook>,
-    proc_addr_hooks: HashMap<&'static [u8], usize>,
+    pub eat_hooks: Vec<EATHook>,
+    pub iat_hooks: Vec<IATHook>,
+    pub inline_hooks: Vec<InlineHook>,
+    pub proc_addr_hooks: HashMap<&'static [u8], usize>,
 }
 
 impl Hook {
@@ -22,6 +22,15 @@ impl Hook {
             print!("Hooking: {}", iat_hook.function);
 
             if unsafe { iat_hook.hook() } {
+                print!("Hook succeeded!\n");
+            } else {
+                print!("Hook failed!\n");
+            }
+        }
+        for inline_hooks in &mut self.inline_hooks {
+            print!("Hooking function at: {:X}", inline_hooks.function_address);
+
+            if unsafe { inline_hooks.hook() } {
                 print!("Hook succeeded!\n");
             } else {
                 print!("Hook failed!\n");

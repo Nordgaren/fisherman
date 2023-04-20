@@ -6,24 +6,25 @@ use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_NT_HEADERS32, IMAGE_N
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 use windows_sys::Win32::System::SystemServices::IMAGE_DOS_HEADER;
 use crate::scanner::simple_scanner::SimpleScanner;
-use crate::util::enforce_null_terminated_character;
+
+pub struct ModuleSignature {
+    pub module: usize,
+    pub signature: Signature,
+}
+
+impl ModuleSignature {
+    pub fn from_ida_pattern(pattern: &str, module: usize) -> Result<Self, ()> {
+        Ok(ModuleSignature { module, signature: Signature::from_ida_pattern(pattern).unwrap() })
+    }
+}
 
 pub struct Signature {
-    pub module: String,
     pub signature: Vec<u8>,
     pub mask: Vec<u8>,
     pub length: usize,
 }
 
 impl Signature {
-    pub fn from_ida_pattern_with_module(pattern: &str, module: &str) -> Result<Self, ()> {
-        let mut sig = Self::from_ida_pattern(pattern)?;
-        let mut module = module.to_string();
-        enforce_null_terminated_character(&mut module);
-        sig.module = module;
-
-        Ok(sig)
-    }
     pub fn from_ida_pattern(pattern: &str) -> Result<Self, ()> {
         let mut signature = Vec::new();
         let mut mask = Vec::new();
@@ -52,7 +53,6 @@ impl Signature {
 
         let length = signature.len();
         Ok(Self {
-            module: Default::default(),
             signature,
             mask,
             length,
@@ -74,13 +74,10 @@ impl FuncAddr for usize {
 impl FuncAddr for &str {
     fn get_address(self) -> usize {
         unsafe {
-            let module_handle = GetModuleHandleA(0 as *const u8) as usize;
-            let module_bytes = get_module_text_section(module_handle);
-            let sig = match Signature::from_ida_pattern(self) {
-                Ok(s) => { s }
-                _ => { return 0; }
-            };
-            SimpleScanner.scan(module_bytes, &sig).unwrap_or(0)
+            match Signature::from_ida_pattern(self) {
+                Ok(s) => { s.get_address() }
+                _ => { 0 }
+            }
         }
     }
 }
@@ -88,13 +85,18 @@ impl FuncAddr for &str {
 impl FuncAddr for Signature {
     fn get_address(self) -> usize {
         unsafe {
-            let module_handle = if !self.module.is_empty() {
-                GetModuleHandleA(self.module.as_ptr()) as usize
-            } else {
-                GetModuleHandleA(0 as *const u8) as usize
-            };
+            let module_handle = GetModuleHandleA(0 as *const u8) as usize;
             let module_bytes = get_module_text_section(module_handle);
             SimpleScanner.scan(module_bytes, &self).unwrap_or(0)
+        }
+    }
+}
+
+impl FuncAddr for ModuleSignature {
+    fn get_address(self) -> usize {
+        unsafe {
+            let module_bytes = get_module_text_section(self.module);
+            SimpleScanner.scan(module_bytes, &self.signature).unwrap_or(0)
         }
     }
 }

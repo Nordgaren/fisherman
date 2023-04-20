@@ -1,3 +1,4 @@
+use minhook_sys::MH_Initialize;
 use crate::hook::eat::EATHook;
 use crate::hook::Hook;
 use crate::hook::iat::IATHook;
@@ -22,7 +23,7 @@ impl HookBuilder {
 
         self
     }
-    pub fn add_eat_hook(mut self, module: &str, function: &str, forward_string: &'static str) -> Self {
+    pub fn add_eat_hook(mut self, module: &str, function: &str, forward_string: &str) -> Self {
         let mut module = module.to_owned();
         enforce_null_terminated_character(&mut module);
         let mut function = function.to_owned();
@@ -33,10 +34,8 @@ impl HookBuilder {
 
         self
     }
-    pub fn add_inline_hook(mut self, module: &str, function_address: impl FuncAddr + 'static, hook_address: usize) -> Self {
-        let mut module = module.to_owned();
-        enforce_null_terminated_character(&mut module);
-        self.hook.inline_hooks.push(InlineHook { module, function_address: Box::new(function_address), hook_address, return_address: 0 });
+    pub fn add_inline_hook(mut self, function_address: impl FuncAddr, hook_address: usize, return_address: &'static mut usize) -> Self {
+        self.hook.inline_hooks.push(InlineHook { function_address: function_address.get_address(), hook_address, return_address });
 
         self
     }
@@ -46,6 +45,9 @@ impl HookBuilder {
         self
     }
     pub fn build(mut self) -> Hook {
+        unsafe {
+            MH_Initialize();
+        }
         self.hook.hook();
 
         self.hook

@@ -56,7 +56,7 @@ mod tests {
                 GetModuleHandleA("kernel32.dll\0".as_ptr()),
                 "LoadLibraryA\0".as_ptr(),
             )
-            .unwrap();
+                .unwrap();
             let hook = HookBuilder::new()
                 .add_iat_hook(
                     "KERNEL32.dll",
@@ -69,14 +69,31 @@ mod tests {
                 GetModuleHandleA("kernel32.dll\0".as_ptr()),
                 "LoadLibraryA\0".as_ptr(),
             )
-            .unwrap();
+                .unwrap();
 
             assert_eq!(original as usize, hooked as usize)
         }
     }
 
+    extern "C" fn some_func(arg: usize) {
+        println!("Hurray! {:X}", arg);
+    }
+
+    extern "C" fn hook_func(arg: usize) {
+        println!("Hooked! {:X}", arg * 2);
+        unsafe {
+            og_some_func(arg / 2);
+        }
+    }
+
+    static mut og_some_func: extern "C" fn(usize) = hook_func;
+
     #[test]
     fn lol() {
-        let hook = HookBuilder::new().add_inline_hook("", Signature::from_ida_pattern(""), 0);
+        unsafe {
+            println!("\n{:X} {:X}", some_func as usize, hook_func as usize);
+            let mut hook = HookBuilder::new().add_inline_hook(some_func as usize, hook_func as usize, mem::transmute(&mut og_some_func)).build();
+            some_func(0x20);
+        }
     }
 }

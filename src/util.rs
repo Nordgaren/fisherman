@@ -97,7 +97,7 @@ pub unsafe fn GetProcAddressInternal(base_address: usize, proc_name: &[u8]) -> u
     proc_address
 }
 
-pub(super) fn enforce_null_terminated_character(string: &mut String) {
+pub fn enforce_null_terminated_character(string: &mut String) {
     if !string.ends_with('\0') {
         string.push('\0');
     }
