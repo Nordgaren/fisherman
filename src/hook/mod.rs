@@ -28,7 +28,6 @@ impl Hook {
                 print!("Hook failed!\n");
             }
         }
-
         if !self.inline_hooks.is_empty() {
             unsafe {
                 MH_Initialize();
@@ -47,9 +46,18 @@ impl Hook {
 
     pub fn unhook(&self) {
         for iat_hook in &self.iat_hooks {
-            print!("Unhooking: {} ", iat_hook.function);
+            print!("[-] Unhooking function: {} ", iat_hook.function);
 
             if unsafe { iat_hook.unhook() } {
+                print!("Unhooking succeeded!\n");
+            } else {
+                print!("Unhook failed!\n");
+            }
+        }
+        for inline_hook in &self.inline_hooks {
+            print!("[-] Unhooking function @ {} ", inline_hook.function);
+
+            if unsafe { inline_hook.unhook() } {
                 print!("Unhooking succeeded!\n");
             } else {
                 print!("Unhook failed!\n");
