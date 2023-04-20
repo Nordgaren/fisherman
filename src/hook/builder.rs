@@ -56,7 +56,7 @@ impl HookBuilder {
         mut self,
         function_address: impl FuncAddr,
         hook_address: usize,
-        return_address: &mut T,
+        return_address: &mut T
     ) -> Self {
         unsafe {
             self.hook.inline_hooks.push(InlineHook {

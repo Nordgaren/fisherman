@@ -20,10 +20,10 @@ type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64;
 type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS32;
 
 pub struct EATHook {
-    pub module: String,
-    pub function: String,
-    pub forward_string: String,
-    pub original_rva: u32,
+    pub(crate) module: String,
+    pub(crate) function: String,
+    pub(crate) forward_string: String,
+    pub(crate) original_rva: u32,
 }
 
 impl EATHook {

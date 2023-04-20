@@ -12,10 +12,10 @@ use windows_sys::Win32::System::Memory::{VirtualProtect, PAGE_READWRITE};
 use windows_sys::Win32::System::SystemServices::IMAGE_IMPORT_DESCRIPTOR;
 
 pub struct IATHook {
-    pub module: String,
-    pub function: String,
-    pub hook_address: usize,
-    pub original_address: usize,
+    pub(crate) module: String,
+    pub(crate) function: String,
+    pub(crate) hook_address: usize,
+    pub(crate) original_address: usize,
 }
 
 impl IATHook {

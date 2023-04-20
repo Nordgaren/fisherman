@@ -5,9 +5,9 @@ use std::mem;
 use std::ptr::addr_of;
 
 pub struct InlineHook {
-    pub function_address: usize,
-    pub hook_address: usize,
-    pub return_address: &'static mut usize,
+    pub(crate) function_address: usize,
+    pub(crate) hook_address: usize,
+    pub(crate) return_address: &'static mut usize,
 }
 
 impl InlineHook {

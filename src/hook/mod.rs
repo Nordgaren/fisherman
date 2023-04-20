@@ -11,10 +11,10 @@ pub mod iat;
 pub mod inline;
 
 pub struct Hook {
-    pub eat_hooks: Vec<EATHook>,
-    pub iat_hooks: Vec<IATHook>,
-    pub inline_hooks: Vec<InlineHook>,
-    pub proc_addr_hooks: HashMap<&'static [u8], usize>,
+    pub(crate) eat_hooks: Vec<EATHook>,
+    pub(crate) iat_hooks: Vec<IATHook>,
+    pub(crate) inline_hooks: Vec<InlineHook>,
+    pub(crate) proc_addr_hooks: HashMap<&'static [u8], usize>,
 }
 
 impl Hook {
