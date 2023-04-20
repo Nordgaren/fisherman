@@ -91,14 +91,14 @@ mod tests {
     #[test]
     fn inline_hook() {
         unsafe {
-            println!("\n{:X} {:X}", some_func as usize, hook_func as usize);
             let mut hook = HookBuilder::new()
                 .add_inline_hook(
                     some_func as usize,
                     hook_func as usize,
-                    mem::transmute(&mut og_some_func),
+                    &mut og_some_func,
                 )
                 .build();
+
             some_func(0x20);
         }
     }

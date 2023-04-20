@@ -1,3 +1,4 @@
+use std::mem;
 use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
@@ -51,17 +52,19 @@ impl HookBuilder {
 
         self
     }
-    pub fn add_inline_hook(
+    pub fn add_inline_hook<T>(
         mut self,
         function_address: impl FuncAddr,
         hook_address: usize,
-        return_address: &'static mut usize,
+        return_address: &mut T,
     ) -> Self {
-        self.hook.inline_hooks.push(InlineHook {
-            function_address: function_address.get_address(),
-            hook_address,
-            return_address,
-        });
+        unsafe {
+            self.hook.inline_hooks.push(InlineHook {
+                function_address: function_address.get_address(),
+                hook_address,
+                return_address: mem::transmute(return_address),
+            });
+        }
 
         self
     }

@@ -20,7 +20,7 @@ pub struct Hook {
 impl Hook {
     pub fn hook(&mut self) {
         for iat_hook in &mut self.iat_hooks {
-            print!("Hooking: {}", iat_hook.function);
+            print!("Hooking: {} ", iat_hook.function);
 
             if unsafe { iat_hook.hook() } {
                 print!("Hook succeeded!\n");
@@ -35,7 +35,7 @@ impl Hook {
             }
         }
         for inline_hooks in &mut self.inline_hooks {
-            print!("Hooking function at: {:X}", inline_hooks.function_address);
+            print!("Hooking function at: {:X} ", inline_hooks.function_address);
 
             if unsafe { inline_hooks.hook() } {
                 print!("Hook succeeded!\n");
