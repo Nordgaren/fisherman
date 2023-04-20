@@ -143,3 +143,59 @@ impl IATHook {
         false
     }
 }
+
+#[allow(non_snake_case)]
+#[cfg(test)]
+mod tests {
+    use std::ffi::{c_char, CStr};
+    use std::mem;
+    use windows_sys::core::PCSTR;
+    use windows_sys::Win32::Foundation::{FARPROC, HMODULE};
+    use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
+    use crate::hook::builder::HookBuilder;
+    use crate::util::GetProcAddressInternal;
+
+    pub unsafe extern "system" fn get_proc_address_hook(
+        module_handle: HMODULE,
+        proc_name: PCSTR,
+    ) -> FARPROC {
+        let c_string = CStr::from_ptr(proc_name as *const c_char);
+        println!("[++] GetProcAddress function: {:?}", c_string);
+        // if you keep a static reference to your hook around, you can hook functions called via
+        // GetProcAddress, here.
+        // if let Some(hook) = &HOOK {
+        //     if let Some(addr) = hook.get_proc_addr_hook(c_string.to_bytes_with_nul()) {
+        //         return *addr;
+        //     }
+        // }
+
+        // return back to GetProcAddress
+        let getProcAddress: unsafe extern "system" fn(HMODULE, PCSTR) -> FARPROC =
+            mem::transmute(GetProcAddressInternal(
+                GetModuleHandleA(PCSTR::from("kernel32.dll\0".as_ptr())) as usize,
+                "GetProcAddress".as_bytes(),
+            ));
+        getProcAddress(module_handle, proc_name)
+    }
+
+    #[test]
+    fn iat_hook() {
+        unsafe {
+            let original = GetProcAddress(
+                GetModuleHandleA("kernel32.dll\0".as_ptr()),
+                "GetProcAddress\0".as_ptr(),
+            )
+                .unwrap();
+            let hook = HookBuilder::new()
+                .add_iat_hook(
+                    "KERNEL32.dll",
+                    "GetProcAddress",
+                    get_proc_address_hook as usize,
+                )
+                .build();
+
+
+            assert_eq!(original as usize, hook.iat_hooks[0].original_address)
+        }
+    }
+}
