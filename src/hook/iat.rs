@@ -154,29 +154,32 @@ mod tests {
     use windows_sys::core::PCSTR;
     use windows_sys::Win32::Foundation::{FARPROC, HMODULE};
     use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
+    use crate::hook::Hook;
 
     pub unsafe extern "system" fn get_proc_address_hook(
-        module_handle: HMODULE,
-        proc_name: PCSTR,
-    ) -> FARPROC {
+        module_handle: usize,
+        proc_name: *const u8,
+    ) -> usize {
         let c_string = CStr::from_ptr(proc_name as *const c_char);
-        println!("[++] GetProcAddress function: {:?}", c_string);
-        // if you keep a static reference to your hook around, you can hook functions called via
+        println!("[++] GetProcAddress function: {:X?}", c_string);
+        //if you keep a static reference to your hook around, you can hook functions called via
         // GetProcAddress, here.
         // if let Some(hook) = &HOOK {
-        //     if let Some(addr) = hook.get_proc_addr_hook(c_string.to_bytes_with_nul()) {
+        //     if let Some(addr) = hook.get_proc_addr_hook(std::str::from_utf8(c_string.to_bytes_with_nul()).unwrap_or_default()) {
         //         return *addr;
         //     }
         // }
 
         // return back to GetProcAddress
-        let getProcAddress: unsafe extern "system" fn(HMODULE, PCSTR) -> FARPROC =
+        let getProcAddress: unsafe extern "system" fn(usize, *const u8) -> usize =
             mem::transmute(GetProcAddressInternal(
                 GetModuleHandleA(PCSTR::from("kernel32.dll\0".as_ptr())) as usize,
                 "GetProcAddress".as_bytes(),
             ));
         getProcAddress(module_handle, proc_name)
     }
+
+    static mut HOOK:Option<Hook> = None;
 
     #[test]
     fn iat_hook() {
@@ -193,8 +196,14 @@ mod tests {
                     get_proc_address_hook as usize,
                 )
                 .build();
+            assert_eq!(original as usize, hook.iat_hooks[0].original_address);
 
-            assert_eq!(original as usize, hook.iat_hooks[0].original_address)
+            HOOK = Some(hook);
+            let bingus = 0;
+            let pBingus = &bingus as *const i32;
+
+            GetProcAddress(GetModuleHandleA("kernel32.dll\0".as_ptr()), "LoadLibraryA\0".as_ptr());
+
         }
     }
 }

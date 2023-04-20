@@ -14,7 +14,7 @@ pub struct Hook {
     pub(crate) eat_hooks: Vec<EATHook>,
     pub(crate) iat_hooks: Vec<IATHook>,
     pub(crate) inline_hooks: Vec<InlineHook>,
-    pub(crate) proc_addr_hooks: HashMap<&'static [u8], usize>,
+    pub(crate) proc_addr_hooks: HashMap<String, usize>,
 }
 
 impl Hook {
@@ -68,7 +68,7 @@ impl Hook {
         }
     }
 
-    pub fn get_proc_addr_hook(&self, key: &[u8]) -> Option<&usize> {
+    pub fn get_proc_addr_hook(&self, key: &str) -> Option<&usize> {
         self.proc_addr_hooks.get(key)
     }
 }
