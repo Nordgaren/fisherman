@@ -165,8 +165,8 @@ mod tests {
         //if you keep a static reference to your hook around, you can hook functions called via
         // GetProcAddress, here.
         // if let Some(hook) = &HOOK {
-        //     if let Some(addr) = hook.get_proc_addr_hook(std::str::from_utf8(c_string.to_bytes_with_nul()).unwrap_or_default()) {
-        //         return *addr;
+        //     if let Some(addr) = hook.get_proc_addr_hook(c_string.to_str().unwrap_or_default()) {
+        //         return addr;
         //     }
         // }
 
@@ -199,9 +199,6 @@ mod tests {
             assert_eq!(original as usize, hook.iat_hooks[0].original_address);
 
             HOOK = Some(hook);
-            let bingus = 0;
-            let pBingus = &bingus as *const i32;
-
             GetProcAddress(GetModuleHandleA("kernel32.dll\0".as_ptr()), "LoadLibraryA\0".as_ptr());
 
         }

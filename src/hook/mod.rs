@@ -68,7 +68,7 @@ impl Hook {
         }
     }
 
-    pub fn get_proc_addr_hook(&self, key: &str) -> Option<&usize> {
-        self.proc_addr_hooks.get(key)
+    pub fn get_proc_addr_hook(&self, key: &str) -> Option<usize> {
+        self.proc_addr_hooks.get(key).cloned()
     }
 }
