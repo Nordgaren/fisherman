@@ -195,4 +195,22 @@ mod tests {
         assert_eq!(mask_iter.next(), Some(&0xFF));
         assert_eq!(mask_iter.next(), None);
     }
+
+    #[test]
+    fn byte_string_too_long() {
+        let sig = Signature::from_ida_pattern("FFFFFFFFFFFFFFFFF");
+        assert!(matches!(
+            sig.unwrap_err(),
+            ()
+        ));
+    }
+
+    #[test]
+    fn wildcard_in_multibyte_string() {
+        let sig = Signature::from_ida_pattern("FF??");
+        assert!(matches!(
+            sig.unwrap_err(),
+            ()
+        ));
+    }
 }
