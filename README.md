@@ -1,6 +1,7 @@
 # Fisherman
 a hooking library aimed to allow the user to choose from multiple hook types.  
 
+***This project is in very early development, and the API may change majorly between updates!***
 ## How to use
 
 ### Inline Hook
