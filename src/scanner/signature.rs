@@ -4,7 +4,6 @@ use std::mem::size_of;
 use std::ptr::addr_of;
 use std::{mem, slice};
 use windows_sys::Win32::Foundation::HMODULE;
-use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64};
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 use windows_sys::Win32::System::SystemServices::IMAGE_DOS_HEADER;
 
@@ -84,75 +83,5 @@ impl Signature {
             length,
             address: None,
         })
-    }
-}
-
-pub trait FuncAddr: Debug {
-    fn get_address(&mut self) -> usize;
-}
-
-impl FuncAddr for usize {
-    fn get_address(&mut self) -> usize {
-        *self
-    }
-}
-
-impl FuncAddr for &str {
-    fn get_address(&mut self) -> usize {
-        match Signature::from_ida_pattern(self) {
-            Ok(mut s) => s.get_address(),
-            _ => 0,
-        }
-    }
-}
-
-impl FuncAddr for Signature {
-    fn get_address(&mut self) -> usize {
-        if let Some(addr) = self.address {
-            addr
-        } else {
-            unsafe {
-                let module_handle = GetModuleHandleA(0 as *const u8) as usize;
-                let module_bytes = get_module_text_section(module_handle);
-                self.address = SimpleScanner.scan(module_bytes, &self);
-                self.address.unwrap_or_default()
-            }
-        }
-    }
-}
-
-impl FuncAddr for ModuleSignature {
-    fn get_address(&mut self) -> usize {
-        if let Some(addr) = self.signature.address {
-            addr
-        } else {
-            unsafe {
-                let module_bytes = get_module_text_section(self.module);
-                self.signature.address = SimpleScanner
-                    .scan(module_bytes, &self.signature);
-                self.signature.address.unwrap_or_default()
-            }
-        }
-    }
-}
-
-unsafe fn get_module_text_section<'a>(module_handle: usize) -> &'a [u8] {
-    let dos_header: &IMAGE_DOS_HEADER = mem::transmute(module_handle);
-    let nt_header_address = module_handle + dos_header.e_lfanew as usize;
-    let machine = (nt_header_address + 4) as *const u16;
-    if *machine == 0x8664 {
-        let nt_headers: &IMAGE_NT_HEADERS32 = mem::transmute(nt_header_address);
-        slice::from_raw_parts(
-            module_handle as *const u8,
-            nt_headers.OptionalHeader.SizeOfImage as usize,
-        )
-    } else if *machine == 0x14C {
-        let nt_headers: &IMAGE_NT_HEADERS32 = mem::transmute(nt_header_address);
-        slice::from_raw_parts(
-            module_handle as *const u8,
-            nt_headers.OptionalHeader.SizeOfImage as usize,
-        )
-    } else {
-        slice::from_raw_parts(module_handle as *const u8, 0)
     }
 }

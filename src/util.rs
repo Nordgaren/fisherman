@@ -1,14 +1,14 @@
 #![allow(non_camel_case_types)]
 
-use std::mem;
+use std::{mem, slice};
 use std::mem::size_of;
 use std::ptr::addr_of;
 use windows_sys::Win32::Foundation::MAX_PATH;
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_DIRECTORY_ENTRY_EXPORT;
+use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64};
 #[cfg(target_arch = "x86")]
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32;
 #[cfg(target_arch = "x86_64")]
-use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64;
 use windows_sys::Win32::System::LibraryLoader::LoadLibraryA;
 use windows_sys::Win32::System::SystemServices::{IMAGE_DOS_HEADER, IMAGE_EXPORT_DIRECTORY};
 
@@ -109,9 +109,9 @@ pub fn enforce_null_terminated_character(string: &mut String) {
 }
 
 // Need internal function for this in unmapped PE state.
-pub fn strlen(s: *const u8) -> usize {
+pub(crate) unsafe fn strlen(s: *const u8) -> usize {
     let mut len = 0;
-    while unsafe { *s.add(len) } != 0 && len <= MAX_PATH as usize {
+    while *s.add(len) != 0 && len <= MAX_PATH as usize {
         len += 1;
     }
 
@@ -119,14 +119,14 @@ pub fn strlen(s: *const u8) -> usize {
 }
 
 #[inline(always)]
-pub fn strlen_with_null(s: *const u8) -> usize {
+pub(crate) unsafe fn strlen_with_null(s: *const u8) -> usize {
     strlen(s) + 1
 }
 
 // Need internal function for this in unmapped PE state.
-pub fn strlenw(s: *const u16) -> usize {
+pub(crate)  unsafe fn strlenw(s: *const u16) -> usize {
     let mut len = 0;
-    while unsafe { *s.add(len) } != 0 && len <= MAX_PATH as usize {
+    while *s.add(len) != 0 && len <= MAX_PATH as usize {
         len += 1;
     }
 
@@ -134,12 +134,12 @@ pub fn strlenw(s: *const u16) -> usize {
 }
 
 #[inline(always)]
-pub fn strlenw_with_null(s: *const u16) -> usize {
+pub(crate) unsafe fn strlenw_with_null(s: *const u16) -> usize {
     strlenw(s) + 1
 }
 
 // Because you can't use the normal rust copy function in an unmapped PE, for some reason.
-pub unsafe fn copy_buffer<T>(src: *const T, dst: *mut T, len: usize) {
+pub(crate) unsafe fn copy_buffer<T>(src: *const T, dst: *mut T, len: usize) {
     let total_size = size_of::<T>() * len;
     let src_slice = core::slice::from_raw_parts(src as *const u8, total_size);
     let dst_slice = core::slice::from_raw_parts_mut(dst as *mut u8, total_size);
@@ -149,7 +149,7 @@ pub unsafe fn copy_buffer<T>(src: *const T, dst: *mut T, len: usize) {
     }
 }
 
-pub unsafe fn zero_memory<T>(buffer: *mut T, len: usize) {
+pub(crate) unsafe fn zero_memory<T>(buffer: *mut T, len: usize) {
     let total_size = size_of::<T>() * len;
     let dst_slice = core::slice::from_raw_parts_mut(buffer as *mut u8, total_size);
 
@@ -157,3 +157,25 @@ pub unsafe fn zero_memory<T>(buffer: *mut T, len: usize) {
         dst_slice[i] = 0;
     }
 }
+
+pub(crate) unsafe fn get_module_text_section<'a>(module_handle: usize) -> &'a [u8] {
+    let dos_header: &IMAGE_DOS_HEADER = mem::transmute(module_handle);
+    let nt_header_address = module_handle + dos_header.e_lfanew as usize;
+    let machine = (nt_header_address + 4) as *const u16;
+    if *machine == 0x8664 {
+        let nt_headers: &IMAGE_NT_HEADERS32 = mem::transmute(nt_header_address);
+        slice::from_raw_parts(
+            module_handle as *const u8,
+            nt_headers.OptionalHeader.SizeOfImage as usize,
+        )
+    } else if *machine == 0x14C {
+        let nt_headers: &IMAGE_NT_HEADERS32 = mem::transmute(nt_header_address);
+        slice::from_raw_parts(
+            module_handle as *const u8,
+            nt_headers.OptionalHeader.SizeOfImage as usize,
+        )
+    } else {
+        slice::from_raw_parts(module_handle as *const u8, 0)
+    }
+}
+

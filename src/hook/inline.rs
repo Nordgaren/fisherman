@@ -1,8 +1,8 @@
-use crate::scanner::signature::FuncAddr;
 use minhook_sys::{MH_CreateHook, MH_DisableHook, MH_EnableHook, MH_ERROR_ALREADY_CREATED, MH_OK};
 use std::ffi::c_void;
 use std::mem;
 use std::ptr::addr_of;
+use crate::func_addr::FuncAddr;
 
 pub struct InlineHook {
     pub(crate) function_address: Box<dyn FuncAddr>,
