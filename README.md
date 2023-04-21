@@ -29,6 +29,8 @@ This will allow you to redirect any function calls that go through GetProcAddres
 You will need to make a static mut variable to hold the hook. I may change to to not require the null terminator, for
 this particular hook, but I am not sure, yet.  
 
+***You MUST have GetProcAddress hooked in some way for this to work.***
+
 ```rust
 static mut HOOK: Option<Hook> = None; 
 ...
