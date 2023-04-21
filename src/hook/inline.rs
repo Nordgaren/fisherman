@@ -5,16 +5,20 @@ use std::mem;
 use std::ptr::addr_of;
 
 pub struct InlineHook {
-    pub(crate) function_address: Box<dyn FuncAddr>,
+    pub func_addr_obj: Box<dyn FuncAddr>,
+    pub(crate) function_address: Option<*mut c_void>,
     pub(crate) hook_address: usize,
     pub(crate) return_address: &'static mut usize,
 }
 
 impl InlineHook {
     pub unsafe fn hook(&mut self) -> bool {
-        let function_address = self.function_address.get_address();
+        let function_address = match self.function_address {
+            Some(addr) => {addr}
+            _ => { return false }
+        };
         let status = MH_CreateHook(
-            function_address as *mut c_void,
+            function_address,
             self.hook_address as *mut c_void,
             mem::transmute(self.return_address as *mut usize),
         );
@@ -23,10 +27,17 @@ impl InlineHook {
             return false;
         };
 
-        MH_EnableHook(function_address as *mut c_void) == MH_OK
+        MH_EnableHook(function_address) == MH_OK
     }
     pub unsafe fn unhook(&mut self) -> bool {
-        MH_DisableHook(self.function_address.get_address() as *mut c_void) == MH_OK
+        let function_address = match self.function_address {
+            Some(addr) => {addr}
+            _ => { return false }
+        };
+        MH_DisableHook(function_address) == MH_OK
+    }
+    pub fn get_function_addr(&mut self) {
+        self.function_address = self.func_addr_obj.get_address();
     }
 }
 

@@ -60,7 +60,8 @@ impl HookBuilder {
     ) -> Self {
         unsafe {
             self.hook.inline_hooks.push(InlineHook {
-                function_address: Box::new(function_address),
+                func_addr_obj: Box::new(function_address),
+                function_address: None,
                 hook_address,
                 return_address: mem::transmute(return_address),
             });

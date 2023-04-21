@@ -30,17 +30,19 @@ impl Hook {
             }
         }
         if !self.inline_hooks.is_empty() {
-            unsafe {
-                MH_Initialize();
-            }
+            MH_Initialize();
         }
-        for inline_hooks in &mut self.inline_hooks {
-            print!(
-                "[+] Hooking function @ {:X} ",
-                inline_hooks.function_address.get_address()
-            );
 
-            if inline_hooks.hook() {
+
+
+        for inline_hook in &mut self.inline_hooks {
+            print!(
+                "[+] Hooking function @ {:X?} ",
+                inline_hook.func_addr_obj
+            );
+            inline_hook.get_function_addr();
+
+            if inline_hook.hook() {
                 print!("Hook succeeded!\n");
             } else {
                 print!("Hook failed!\n");
@@ -60,8 +62,8 @@ impl Hook {
         }
         for inline_hook in &mut self.inline_hooks {
             print!(
-                "[-] Unhooking function @ {} ",
-                inline_hook.function_address.get_address()
+                "[-] Unhooking function @ {:X?} ",
+                inline_hook.func_addr_obj
             );
 
             if inline_hook.unhook() {

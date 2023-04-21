@@ -1,3 +1,4 @@
+use std::ffi::c_void;
 use crate::scanner::signature::{ModuleSignature, Signature};
 use crate::scanner::simple_scanner::SimpleScanner;
 use crate::util::get_module_text_section;
@@ -5,48 +6,48 @@ use std::fmt::Debug;
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 
 pub trait FuncAddr: Debug {
-    fn get_address(&mut self) -> usize;
+    fn get_address(&mut self) -> Option<*mut c_void>;
 }
 
 impl FuncAddr for usize {
-    fn get_address(&mut self) -> usize {
-        *self
+    fn get_address(&mut self) -> Option<*mut c_void> {
+        Some(*self as *mut c_void)
     }
 }
 
 impl FuncAddr for &str {
-    fn get_address(&mut self) -> usize {
+    fn get_address(&mut self) -> Option<*mut c_void> {
         match Signature::from_ida_pattern(self) {
             Ok(mut s) => s.get_address(),
-            _ => 0,
+            _ => None,
         }
     }
 }
 
 impl FuncAddr for Signature {
-    fn get_address(&mut self) -> usize {
-        if let Some(addr) = self.address {
-            addr
+    fn get_address(&mut self) -> Option<*mut c_void> {
+        if self.address.is_some() {
+            self.address
         } else {
             unsafe {
                 let module_handle = GetModuleHandleA(0 as *const u8) as usize;
                 let module_bytes = get_module_text_section(module_handle);
-                self.address = SimpleScanner.scan(module_bytes, &self);
-                self.address.unwrap_or_default()
+                self.address = SimpleScanner.scan(module_bytes, &self) as Option<*mut c_void>;
+                self.address
             }
         }
     }
 }
 
 impl FuncAddr for ModuleSignature {
-    fn get_address(&mut self) -> usize {
-        if let Some(addr) = self.signature.address {
-            addr
+    fn get_address(&mut self) -> Option<*mut c_void> {
+        if self.signature.address.is_some() {
+            self.signature.address
         } else {
             unsafe {
                 let module_bytes = get_module_text_section(self.module);
                 self.signature.address = SimpleScanner.scan(module_bytes, &self.signature);
-                self.signature.address.unwrap_or_default()
+                self.signature.address
             }
         }
     }

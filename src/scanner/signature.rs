@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::mem::size_of;
 use std::ptr::addr_of;
 use std::{mem, slice};
+use std::ffi::c_void;
 use windows_sys::Win32::Foundation::HMODULE;
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 use windows_sys::Win32::System::SystemServices::IMAGE_DOS_HEADER;
@@ -27,7 +28,7 @@ pub struct Signature {
     pub signature: Vec<u8>,
     pub mask: Vec<u8>,
     pub length: usize,
-    pub address: Option<usize>,
+    pub address: Option<*mut c_void>,
 }
 
 // TY https://github.com/vswarte for your from_ida_pattern method in your AoB scanner for Broadsword!
