@@ -148,13 +148,13 @@ impl IATHook {
 #[cfg(test)]
 mod tests {
     use crate::hook::builder::HookBuilder;
+    use crate::hook::Hook;
     use crate::util::GetProcAddressInternal;
     use std::ffi::{c_char, CStr};
     use std::mem;
     use windows_sys::core::PCSTR;
     use windows_sys::Win32::Foundation::{FARPROC, HMODULE};
     use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
-    use crate::hook::Hook;
 
     pub unsafe extern "system" fn get_proc_address_hook(
         module_handle: usize,
@@ -179,7 +179,7 @@ mod tests {
         getProcAddress(module_handle, proc_name)
     }
 
-    static mut HOOK:Option<Hook> = None;
+    static mut HOOK: Option<Hook> = None;
 
     #[test]
     fn iat_hook() {
@@ -199,8 +199,10 @@ mod tests {
             assert_eq!(original as usize, hook.iat_hooks[0].original_address);
 
             HOOK = Some(hook);
-            GetProcAddress(GetModuleHandleA("kernel32.dll\0".as_ptr()), "LoadLibraryA\0".as_ptr());
-
+            GetProcAddress(
+                GetModuleHandleA("kernel32.dll\0".as_ptr()),
+                "LoadLibraryA\0".as_ptr(),
+            );
         }
     }
 }

@@ -1,8 +1,8 @@
 use crate::scanner::simple_scanner::SimpleScanner;
+use std::fmt::Debug;
 use std::mem::size_of;
 use std::ptr::addr_of;
 use std::{mem, slice};
-use std::fmt::Debug;
 use windows_sys::Win32::Foundation::HMODULE;
 use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64};
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;

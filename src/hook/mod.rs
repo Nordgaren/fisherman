@@ -58,7 +58,10 @@ impl Hook {
             }
         }
         for inline_hook in &self.inline_hooks {
-            print!("[-] Unhooking function @ {} ", inline_hook.function_address.get_address());
+            print!(
+                "[-] Unhooking function @ {} ",
+                inline_hook.function_address.get_address()
+            );
 
             if inline_hook.unhook() {
                 print!("Unhooking succeeded!\n");

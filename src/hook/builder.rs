@@ -71,9 +71,7 @@ impl HookBuilder {
     pub fn add_proc_addr_hook(mut self, function: &str, hook_address: usize) -> Self {
         let mut function = function.to_string();
         enforce_null_terminated_character(&mut function);
-        self.hook
-            .proc_addr_hooks
-            .insert(function, hook_address);
+        self.hook.proc_addr_hooks.insert(function, hook_address);
 
         self
     }
@@ -83,4 +81,3 @@ impl HookBuilder {
         self.hook
     }
 }
-
