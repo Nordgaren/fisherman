@@ -30,7 +30,8 @@ pub struct Signature {
     pub address: Option<usize>,
 }
 
-// TY Chainfailure for your from_ida_pattern method in your AoB scanner for Broadsword!
+// TY https://github.com/vswarte for your from_ida_pattern method in your AoB scanner for Broadsword!
+// Hope to use the real thing once the pattern matching is merged in!
 impl Signature {
     pub fn from_ida_pattern(pattern: &str) -> Result<Self, ()> {
         let mut signature = Vec::new();
@@ -53,14 +54,14 @@ impl Signature {
                             .into_iter()
                             .skip_while(|b| *b == 0),
                     ),
-                    5 | 6 => signature.extend(
+                    5..=8 => signature.extend(
                         u32::from_str_radix(byte, 16)
                             .map_err(|_| {})?
                             .to_be_bytes()
                             .into_iter()
                             .skip_while(|b| *b == 0),
                     ),
-                    7 | 8 => signature.extend(
+                    9..=16 => signature.extend(
                         u64::from_str_radix(byte, 16)
                             .map_err(|_| {})?
                             .to_be_bytes()

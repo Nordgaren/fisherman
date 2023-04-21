@@ -4,13 +4,17 @@ a hooking library aimed to allow the user to choose from multiple hook types.
 ## How to use
 
 ### Inline Hook
-Inline hook takes a usize, IDA/AoB string, Signature or ModuleSignature as it's first arguemnt.  
+Inline hook takes a usize, IDA/AoB string, Signature or ModuleSignature as it's first argument.  
 The second argument is the address of the function we want to go to with the hook.  
 the third is the static variable you are going to store the return function at.
 
 The first 3 types that can go into the first argument all assume that the AOB scan is going to take 
 place in the main process module. If you need to scan a different module, add the base address of that 
 module to ModuleSignature, and the scan will take place over that module.
+
+the IDA string supports single `?` as one byte as well as `??` as one byte. It will also parse bytes that
+are together up to 16 characters, like `20B4`, none of which can be a wild card. This feature might not last long, as 
+there is a better pattern scanner I want to use, but I haven't implemented, yet. 
 
 ### IAT Hook
 IAT hook takes the name of the module the function is in as the first argument.  
@@ -44,7 +48,7 @@ Altogether, you get a builder like this:
         let mut hook = HookBuilder::new()
             .add_inline_hook(some_func as usize, some_func_hook as usize, &mut og_some_func)
             .add_inline_hook(
-                "48 83 EC 28 E8 17 FF FF FF 48 85 C0 74 08 48 8B 00 48 83 C4 28 C3",
+                "48 83 EC 28 E8 ?? ?? ?? ?? 48 85 C0 74 08 48 8B 00 48 83 C4 28 C3",
                 get_char_ins_from_handle as usize,
                 &mut og_get_char_ins_from_handle,
             )

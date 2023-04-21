@@ -1,7 +1,7 @@
 use crate::scanner::signature::Signature;
 
 pub struct SimpleScanner;
-// TY Chainfailure for your scan method in your AoB scanner for Broadsword!
+// TY https://github.com/vswarte for your scan method in your AoB scanner for Broadsword!
 impl SimpleScanner {
     pub fn scan(&self, scannable: &[u8], pattern: &Signature) -> Option<usize> {
         let mut position_in_pattern = 0;

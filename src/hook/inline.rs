@@ -12,9 +12,9 @@ pub struct InlineHook {
 
 impl InlineHook {
     pub unsafe fn hook(&mut self) -> bool {
-        let addr = self.function_address.get_address();
+        let function_address = self.function_address.get_address();
         let status = MH_CreateHook(
-            addr as *mut c_void,
+            function_address as *mut c_void,
             self.hook_address as *mut c_void,
             mem::transmute(self.return_address as *mut usize),
         );
@@ -23,7 +23,7 @@ impl InlineHook {
             return false;
         };
 
-        MH_EnableHook(addr as *mut c_void) == MH_OK
+        MH_EnableHook(function_address as *mut c_void) == MH_OK
     }
     pub unsafe fn unhook(&mut self) -> bool {
         MH_DisableHook(self.function_address.get_address() as *mut c_void) == MH_OK
