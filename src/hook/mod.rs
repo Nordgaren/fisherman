@@ -1,3 +1,4 @@
+use std::any::Any;
 use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
