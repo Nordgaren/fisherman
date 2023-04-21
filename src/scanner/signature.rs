@@ -86,3 +86,113 @@ impl Signature {
         })
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use crate::scanner::signature::Signature;
+
+    #[test]
+    fn byte_string() {
+        let sig = Signature::from_ida_pattern("F FF").unwrap();
+
+        let mut sig_iter = sig.signature.iter();
+        assert_eq!(sig_iter.next(), Some(&0xF));
+        assert_eq!(sig_iter.next(), Some(&0xFF));
+        assert_eq!(sig_iter.next(), None);
+
+        let mut mask_iter = sig.mask.iter();
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), None);
+    }
+
+    #[test]
+    fn short_string() {
+        let sig = Signature::from_ida_pattern("FFF DD09").unwrap();
+
+        let mut sig_iter = sig.signature.iter();
+        assert_eq!(sig_iter.next(), Some(&0xF));
+        assert_eq!(sig_iter.next(), Some(&0xFF));
+        assert_eq!(sig_iter.next(), Some(&0xDD));
+        assert_eq!(sig_iter.next(), Some(&0x09));
+        assert_eq!(sig_iter.next(), None);
+
+        let mut mask_iter = sig.mask.iter();
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), None);
+    }
+
+    #[test]
+    fn int_string() {
+        let sig = Signature::from_ida_pattern("D090000 DD090000").unwrap();
+
+        let mut sig_iter = sig.signature.iter();
+        assert_eq!(sig_iter.next(), Some(&0xD));
+        assert_eq!(sig_iter.next(), Some(&0x9));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), Some(&0xDD));
+        assert_eq!(sig_iter.next(), Some(&0x9));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), None);
+
+        let mut mask_iter = sig.mask.iter();
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), None);
+    }
+
+    #[test]
+    fn longlong_string() {
+        let sig = Signature::from_ida_pattern("D090000DD090000 DD090000DD090000").unwrap();
+
+        let mut sig_iter = sig.signature.iter();
+        assert_eq!(sig_iter.next(), Some(&0xD));
+        assert_eq!(sig_iter.next(), Some(&0x9));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), Some(&0xDD));
+        assert_eq!(sig_iter.next(), Some(&0x9));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), Some(&0xDD));
+        assert_eq!(sig_iter.next(), Some(&0x9));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), Some(&0xDD));
+        assert_eq!(sig_iter.next(), Some(&0x9));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), Some(&0x00));
+        assert_eq!(sig_iter.next(), None);
+
+        let mut mask_iter = sig.mask.iter();
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), Some(&0xFF));
+        assert_eq!(mask_iter.next(), None);
+    }
+}
