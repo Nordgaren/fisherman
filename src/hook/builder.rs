@@ -1,3 +1,4 @@
+use crate::func_addr::FuncAddr;
 use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
@@ -5,7 +6,6 @@ use crate::hook::Hook;
 use crate::util::enforce_null_terminated_character;
 use minhook_sys::MH_Initialize;
 use std::mem;
-use crate::func_addr::FuncAddr;
 
 pub struct HookBuilder {
     hook: Hook,

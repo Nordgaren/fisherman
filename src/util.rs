@@ -1,13 +1,13 @@
 #![allow(non_camel_case_types)]
 
-use std::{mem, slice};
 use std::mem::size_of;
 use std::ptr::addr_of;
+use std::{mem, slice};
 use windows_sys::Win32::Foundation::MAX_PATH;
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_DIRECTORY_ENTRY_EXPORT;
-use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64};
 #[cfg(target_arch = "x86")]
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32;
+use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64};
 #[cfg(target_arch = "x86_64")]
 use windows_sys::Win32::System::LibraryLoader::LoadLibraryA;
 use windows_sys::Win32::System::SystemServices::{IMAGE_DOS_HEADER, IMAGE_EXPORT_DIRECTORY};
@@ -124,7 +124,7 @@ pub(crate) unsafe fn strlen_with_null(s: *const u8) -> usize {
 }
 
 // Need internal function for this in unmapped PE state.
-pub(crate)  unsafe fn strlenw(s: *const u16) -> usize {
+pub(crate) unsafe fn strlenw(s: *const u16) -> usize {
     let mut len = 0;
     while *s.add(len) != 0 && len <= MAX_PATH as usize {
         len += 1;
@@ -178,4 +178,3 @@ pub(crate) unsafe fn get_module_text_section<'a>(module_handle: usize) -> &'a [u
         slice::from_raw_parts(module_handle as *const u8, 0)
     }
 }
-

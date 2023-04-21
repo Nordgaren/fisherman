@@ -1,8 +1,8 @@
-use std::fmt::Debug;
-use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 use crate::scanner::signature::{ModuleSignature, Signature};
 use crate::scanner::simple_scanner::SimpleScanner;
 use crate::util::get_module_text_section;
+use std::fmt::Debug;
+use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 
 pub trait FuncAddr: Debug {
     fn get_address(&mut self) -> usize;
@@ -45,8 +45,7 @@ impl FuncAddr for ModuleSignature {
         } else {
             unsafe {
                 let module_bytes = get_module_text_section(self.module);
-                self.signature.address = SimpleScanner
-                    .scan(module_bytes, &self.signature);
+                self.signature.address = SimpleScanner.scan(module_bytes, &self.signature);
                 self.signature.address.unwrap_or_default()
             }
         }
