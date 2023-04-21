@@ -39,9 +39,8 @@ impl Signature {
 
         for byte in pattern.split_whitespace() {
             if byte == "?" || byte == "??" {
-                let extend = (byte.len() + 1) / 2;
-                mask.resize(mask.len() + extend, 0);
-                signature.resize(signature.len() + extend, 0);
+                mask.push(0);
+                signature.push( 0);
             } else {
                 let extend = (byte.len() + 1) / 2;
                 mask.resize(signature.len() + extend, 0xFF);
