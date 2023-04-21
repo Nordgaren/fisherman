@@ -22,11 +22,13 @@ impl ModuleSignature {
         })
     }
 }
+
 #[derive(Debug)]
 pub struct Signature {
     pub signature: Vec<u8>,
     pub mask: Vec<u8>,
     pub length: usize,
+    pub address: Option<usize>,
 }
 
 // TY Chainfailure for your from_ida_pattern method in your AoB scanner for Broadsword!
@@ -80,48 +82,56 @@ impl Signature {
             signature,
             mask,
             length,
+            address: None,
         })
     }
 }
 
 pub trait FuncAddr: Debug {
-    fn get_address(&self) -> usize;
+    fn get_address(&mut self) -> usize;
 }
 
 impl FuncAddr for usize {
-    fn get_address(&self) -> usize {
+    fn get_address(&mut self) -> usize {
         *self
     }
 }
 
 impl FuncAddr for &str {
-    fn get_address(&self) -> usize {
-        unsafe {
-            match Signature::from_ida_pattern(self) {
-                Ok(s) => s.get_address(),
-                _ => 0,
-            }
+    fn get_address(&mut self) -> usize {
+        match Signature::from_ida_pattern(self) {
+            Ok(mut s) => s.get_address(),
+            _ => 0,
         }
     }
 }
 
 impl FuncAddr for Signature {
-    fn get_address(&self) -> usize {
-        unsafe {
-            let module_handle = GetModuleHandleA(0 as *const u8) as usize;
-            let module_bytes = get_module_text_section(module_handle);
-            SimpleScanner.scan(module_bytes, &self).unwrap_or(0)
+    fn get_address(&mut self) -> usize {
+        if let Some(addr) = self.address {
+            addr
+        } else {
+            unsafe {
+                let module_handle = GetModuleHandleA(0 as *const u8) as usize;
+                let module_bytes = get_module_text_section(module_handle);
+                self.address = SimpleScanner.scan(module_bytes, &self);
+                self.address.unwrap_or_default()
+            }
         }
     }
 }
 
 impl FuncAddr for ModuleSignature {
-    fn get_address(&self) -> usize {
-        unsafe {
-            let module_bytes = get_module_text_section(self.module);
-            SimpleScanner
-                .scan(module_bytes, &self.signature)
-                .unwrap_or(0)
+    fn get_address(&mut self) -> usize {
+        if let Some(addr) = self.signature.address {
+            addr
+        } else {
+            unsafe {
+                let module_bytes = get_module_text_section(self.module);
+                self.signature.address = SimpleScanner
+                    .scan(module_bytes, &self.signature);
+                self.signature.address.unwrap_or_default()
+            }
         }
     }
 }

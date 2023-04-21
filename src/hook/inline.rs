@@ -25,7 +25,7 @@ impl InlineHook {
 
         MH_EnableHook(addr as *mut c_void) == MH_OK
     }
-    pub unsafe fn unhook(&self) -> bool {
+    pub unsafe fn unhook(&mut self) -> bool {
         MH_DisableHook(self.function_address.get_address() as *mut c_void) == MH_OK
     }
 }

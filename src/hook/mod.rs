@@ -47,7 +47,7 @@ impl Hook {
         }
     }
 
-    pub unsafe fn unhook(&self) {
+    pub unsafe fn unhook(&mut self) {
         for iat_hook in &self.iat_hooks {
             print!("[-] Unhooking function: {} ", iat_hook.function);
 
@@ -57,7 +57,7 @@ impl Hook {
                 print!("Unhook failed!\n");
             }
         }
-        for inline_hook in &self.inline_hooks {
+        for inline_hook in &mut self.inline_hooks {
             print!(
                 "[-] Unhooking function @ {} ",
                 inline_hook.function_address.get_address()
