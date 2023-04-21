@@ -2,11 +2,13 @@ use crate::scanner::simple_scanner::SimpleScanner;
 use std::mem::size_of;
 use std::ptr::addr_of;
 use std::{mem, slice};
+use std::fmt::Debug;
 use windows_sys::Win32::Foundation::HMODULE;
 use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64};
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 use windows_sys::Win32::System::SystemServices::IMAGE_DOS_HEADER;
 
+#[derive(Debug)]
 pub struct ModuleSignature {
     pub module: usize,
     pub signature: Signature,
@@ -20,7 +22,7 @@ impl ModuleSignature {
         })
     }
 }
-
+#[derive(Debug)]
 pub struct Signature {
     pub signature: Vec<u8>,
     pub mask: Vec<u8>,
@@ -82,18 +84,18 @@ impl Signature {
     }
 }
 
-pub trait FuncAddr {
-    fn get_address(self) -> usize;
+pub trait FuncAddr: Debug {
+    fn get_address(&self) -> usize;
 }
 
 impl FuncAddr for usize {
-    fn get_address(self) -> usize {
-        self
+    fn get_address(&self) -> usize {
+        *self
     }
 }
 
 impl FuncAddr for &str {
-    fn get_address(self) -> usize {
+    fn get_address(&self) -> usize {
         unsafe {
             match Signature::from_ida_pattern(self) {
                 Ok(s) => s.get_address(),
@@ -104,7 +106,7 @@ impl FuncAddr for &str {
 }
 
 impl FuncAddr for Signature {
-    fn get_address(self) -> usize {
+    fn get_address(&self) -> usize {
         unsafe {
             let module_handle = GetModuleHandleA(0 as *const u8) as usize;
             let module_bytes = get_module_text_section(module_handle);
@@ -114,7 +116,7 @@ impl FuncAddr for Signature {
 }
 
 impl FuncAddr for ModuleSignature {
-    fn get_address(self) -> usize {
+    fn get_address(&self) -> usize {
         unsafe {
             let module_bytes = get_module_text_section(self.module);
             SimpleScanner

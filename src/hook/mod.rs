@@ -18,11 +18,11 @@ pub struct Hook {
 }
 
 impl Hook {
-    pub fn hook(&mut self) {
+    pub unsafe fn hook(&mut self) {
         for iat_hook in &mut self.iat_hooks {
             print!("[+] Hooking function: {}", iat_hook.function);
 
-            if unsafe { iat_hook.hook() } {
+            if iat_hook.hook() {
                 print!("Hook succeeded!\n");
             } else {
                 print!("Hook failed!\n");
@@ -36,10 +36,10 @@ impl Hook {
         for inline_hooks in &mut self.inline_hooks {
             print!(
                 "[+] Hooking function @ {:X} ",
-                inline_hooks.function_address
+                inline_hooks.function_address.get_address()
             );
 
-            if unsafe { inline_hooks.hook() } {
+            if inline_hooks.hook() {
                 print!("Hook succeeded!\n");
             } else {
                 print!("Hook failed!\n");
@@ -47,20 +47,20 @@ impl Hook {
         }
     }
 
-    pub fn unhook(&self) {
+    pub unsafe fn unhook(&self) {
         for iat_hook in &self.iat_hooks {
             print!("[-] Unhooking function: {} ", iat_hook.function);
 
-            if unsafe { iat_hook.unhook() } {
+            if iat_hook.unhook() {
                 print!("Unhooking succeeded!\n");
             } else {
                 print!("Unhook failed!\n");
             }
         }
         for inline_hook in &self.inline_hooks {
-            print!("[-] Unhooking function @ {} ", inline_hook.function_address);
+            print!("[-] Unhooking function @ {} ", inline_hook.function_address.get_address());
 
-            if unsafe { inline_hook.unhook() } {
+            if inline_hook.unhook() {
                 print!("Unhooking succeeded!\n");
             } else {
                 print!("Unhook failed!\n");

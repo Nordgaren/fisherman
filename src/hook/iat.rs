@@ -161,7 +161,7 @@ mod tests {
         proc_name: *const u8,
     ) -> usize {
         let c_string = CStr::from_ptr(proc_name as *const c_char);
-        println!("[++] GetProcAddress function: {:X?}", c_string);
+        println!("[!] GetProcAddress function: {:X?}", c_string);
         //if you keep a static reference to your hook around, you can hook functions called via
         // GetProcAddress, here.
         // if let Some(hook) = &HOOK {

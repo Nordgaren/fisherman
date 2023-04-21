@@ -54,13 +54,13 @@ impl HookBuilder {
     }
     pub fn add_inline_hook<T>(
         mut self,
-        function_address: impl FuncAddr,
+        function_address: impl FuncAddr + 'static,
         hook_address: usize,
         return_address: &mut T,
     ) -> Self {
         unsafe {
             self.hook.inline_hooks.push(InlineHook {
-                function_address: function_address.get_address(),
+                function_address: Box::new(function_address),
                 hook_address,
                 return_address: mem::transmute(return_address),
             });
@@ -77,9 +77,10 @@ impl HookBuilder {
 
         self
     }
-    pub fn build(mut self) -> Hook {
+    pub unsafe fn build(mut self) -> Hook {
         self.hook.hook();
 
         self.hook
     }
 }
+
