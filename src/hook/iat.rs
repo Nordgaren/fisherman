@@ -124,7 +124,7 @@ impl IATHook {
         }
         let c_string = CStr::from_ptr(self.function.as_ptr() as *const c_char);
         let import_entry_addr = thunk.add(function_index);
-        if *import_entry_addr != self.original_address {
+        if *import_entry_addr != self.hook_address {
             print!(
                 "Hook was re-hooked! {:?} New hook addr: {:X} ",
                 c_string, *import_entry_addr
@@ -200,6 +200,15 @@ mod tests {
             assert_eq!(original as usize, hook.iat_hooks[0].original_address);
 
             HOOK = Some(hook);
+            GetProcAddress(
+                GetModuleHandleA("kernel32.dll\0".as_ptr()),
+                "LoadLibraryA\0".as_ptr(),
+            );
+
+            if let Some(hook) = &mut HOOK {
+                hook.unhook();
+            }
+
             GetProcAddress(
                 GetModuleHandleA("kernel32.dll\0".as_ptr()),
                 "LoadLibraryA\0".as_ptr(),

@@ -66,6 +66,10 @@ mod tests {
                 .build();
 
             some_func(0x20);
+
+            hook.unhook();
+
+            some_func(0x20);
         }
     }
 }
