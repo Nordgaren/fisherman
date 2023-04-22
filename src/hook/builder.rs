@@ -6,6 +6,7 @@ use crate::hook::Hook;
 use crate::util::enforce_null_terminated_character;
 use std::mem;
 
+#[derive(Default)]
 pub struct HookBuilder {
     hook: Hook,
 }
@@ -13,12 +14,7 @@ pub struct HookBuilder {
 impl HookBuilder {
     pub fn new() -> Self {
         HookBuilder {
-            hook: Hook {
-                eat_hooks: vec![],
-                iat_hooks: vec![],
-                inline_hooks: vec![],
-                proc_addr_hooks: Default::default(),
-            },
+            hook: Default::default(),
         }
     }
     pub fn add_iat_hook(mut self, module: &str, function: &str, hook_address: usize) -> Self {

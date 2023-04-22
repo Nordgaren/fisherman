@@ -10,6 +10,7 @@ pub mod hook_util;
 pub mod iat;
 pub mod inline;
 
+#[derive(Default)]
 pub struct Hook {
     pub(crate) eat_hooks: Vec<EATHook>,
     pub(crate) iat_hooks: Vec<IATHook>,
@@ -18,6 +19,14 @@ pub struct Hook {
 }
 
 impl Hook {
+    pub fn new() -> Self {
+        Hook {
+            eat_hooks: Default::default(),
+            iat_hooks: Default::default(),
+            inline_hooks: Default::default(),
+            proc_addr_hooks: Default::default(),
+        }
+    }
     pub unsafe fn hook(&mut self) {
         for iat_hook in &mut self.iat_hooks {
             print!("[+] Hooking function: {}", iat_hook.function);
