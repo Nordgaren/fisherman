@@ -154,7 +154,6 @@ mod tests {
     use std::ffi::{c_char, CStr};
     use std::mem;
     use windows_sys::core::PCSTR;
-    use windows_sys::Win32::Foundation::{FARPROC, HMODULE};
     use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
 
     pub unsafe extern "system" fn get_proc_address_hook(
@@ -166,7 +165,7 @@ mod tests {
         //if you keep a static reference to your hook around, you can hook functions called via
         // GetProcAddress, here.
         // if let Some(hook) = &HOOK {
-        //     if let Some(addr) = hook.get_proc_addr_hook(c_string.to_str().unwrap_or_default()) {
+        //     if let Some(addr) = hook.check_proc_addr_hook_bytes(c_string.to_bytes_with_nul()) {
         //         return addr;
         //     }
         // }

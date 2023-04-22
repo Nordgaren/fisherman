@@ -38,8 +38,10 @@ this particular hook, but I am not sure, yet.
 static mut HOOK: Option<Hook> = None; 
 ...
 // inside get_proc_address_hook
+let c_string = CStr::from_ptr(proc_name as *const c_char);
+println!("[!] GetProcAddress function: {:X?}", c_string);
 if let Some(hook) = &HOOK {
-     if let Some(addr) = hook.get_proc_addr_hook(std::str::from_utf8(c_string.to_bytes_with_nul()).unwrap_or_default()) {
+     if let Some(addr) = hook.check_proc_addr_hook_bytes(c_string.to_bytes_with_nul()) {
          return addr;
      }
 }

@@ -1,14 +1,7 @@
-use crate::scanner::simple_scanner::SimpleScanner;
-use std::fmt::Debug;
-use std::mem::size_of;
-use std::ptr::addr_of;
-use std::{mem, slice};
+use std::fmt::{Debug, Formatter};
 use std::ffi::c_void;
-use windows_sys::Win32::Foundation::HMODULE;
-use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
-use windows_sys::Win32::System::SystemServices::IMAGE_DOS_HEADER;
 
-#[derive(Debug)]
+
 pub struct ModuleSignature {
     pub module: usize,
     pub signature: Signature,
@@ -23,12 +16,26 @@ impl ModuleSignature {
     }
 }
 
-#[derive(Debug)]
+
 pub struct Signature {
     pub signature: Vec<u8>,
     pub mask: Vec<u8>,
     pub length: usize,
     pub address: Option<*mut c_void>,
+}
+
+impl Debug for Signature {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:X?}", self.signature)?;
+        Ok(())
+    }
+}
+
+impl Debug for ModuleSignature {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:X?}", self.signature.signature)?;
+        Ok(())
+    }
 }
 
 // TY https://github.com/vswarte for your from_ida_pattern method in your AoB scanner for Broadsword!

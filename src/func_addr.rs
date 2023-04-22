@@ -1,7 +1,7 @@
 use std::ffi::c_void;
 use crate::scanner::signature::{ModuleSignature, Signature};
 use crate::scanner::simple_scanner::SimpleScanner;
-use crate::util::get_module_text_section;
+use crate::util::get_module_slice;
 use std::fmt::Debug;
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 
@@ -31,8 +31,8 @@ impl FuncAddr for Signature {
         } else {
             unsafe {
                 let module_handle = GetModuleHandleA(0 as *const u8) as usize;
-                let module_bytes = get_module_text_section(module_handle);
-                self.address = SimpleScanner.scan(module_bytes, &self) as Option<*mut c_void>;
+                let module_bytes = get_module_slice(module_handle);
+                self.address = SimpleScanner.scan(module_bytes, &self);
                 self.address
             }
         }
@@ -45,7 +45,7 @@ impl FuncAddr for ModuleSignature {
             self.signature.address
         } else {
             unsafe {
-                let module_bytes = get_module_text_section(self.module);
+                let module_bytes = get_module_slice(self.module);
                 self.signature.address = SimpleScanner.scan(module_bytes, &self.signature);
                 self.signature.address
             }

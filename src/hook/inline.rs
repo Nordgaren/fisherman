@@ -2,10 +2,9 @@ use crate::func_addr::FuncAddr;
 use minhook_sys::{MH_CreateHook, MH_DisableHook, MH_EnableHook, MH_ERROR_ALREADY_CREATED, MH_OK};
 use std::ffi::c_void;
 use std::mem;
-use std::ptr::addr_of;
 
 pub struct InlineHook {
-    pub func_addr_obj: Box<dyn FuncAddr>,
+    pub(crate) func_addr_obj: Box<dyn FuncAddr>,
     pub(crate) function_address: Option<*mut c_void>,
     pub(crate) hook_address: usize,
     pub(crate) return_address: &'static mut usize,
@@ -14,8 +13,8 @@ pub struct InlineHook {
 impl InlineHook {
     pub unsafe fn hook(&mut self) -> bool {
         let function_address = match self.function_address {
-            Some(addr) => {addr}
-            _ => { return false }
+            Some(addr) => addr,
+            _ => return false,
         };
         let status = MH_CreateHook(
             function_address,
@@ -31,8 +30,8 @@ impl InlineHook {
     }
     pub unsafe fn unhook(&mut self) -> bool {
         let function_address = match self.function_address {
-            Some(addr) => {addr}
-            _ => { return false }
+            Some(addr) => addr,
+            _ => return false,
         };
         MH_DisableHook(function_address) == MH_OK
     }
@@ -66,9 +65,7 @@ mod tests {
                 .build();
 
             some_func(0x20);
-
             hook.unhook();
-
             some_func(0x20);
         }
     }

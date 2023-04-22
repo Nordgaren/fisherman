@@ -4,7 +4,6 @@ use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
 use crate::hook::Hook;
 use crate::util::enforce_null_terminated_character;
-use minhook_sys::MH_Initialize;
 use std::mem;
 
 pub struct HookBuilder {

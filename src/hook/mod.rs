@@ -1,4 +1,3 @@
-use std::any::Any;
 use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
@@ -32,7 +31,6 @@ impl Hook {
         if !self.inline_hooks.is_empty() {
             MH_Initialize();
         }
-
 
 
         for inline_hook in &mut self.inline_hooks {
@@ -74,7 +72,14 @@ impl Hook {
         }
     }
 
-    pub fn get_proc_addr_hook(&self, key: &str) -> Option<usize> {
+    pub fn check_proc_addr_hook(&self, key: &str) -> Option<usize> {
         self.proc_addr_hooks.get(key).cloned()
+    }
+    pub fn check_proc_addr_hook_bytes(&self, key: &[u8]) -> Option<usize> {
+        let str = match std::str::from_utf8(key) {
+            Ok(str) => { str }
+            _ => { return None; }
+        };
+        self.proc_addr_hooks.get(str).cloned()
     }
 }
