@@ -1,6 +1,5 @@
-use std::fmt::{Debug, Formatter};
 use std::ffi::c_void;
-
+use std::fmt::{Debug, Formatter};
 
 pub struct ModuleSignature {
     pub module: usize,
@@ -64,7 +63,7 @@ impl Signature {
         for byte in pattern.split_whitespace() {
             if byte == "?" || byte == "??" {
                 mask.push(0);
-                signature.push( 0);
+                signature.push(0);
             } else {
                 let extend = (byte.len() + 1) / 2;
                 mask.resize(signature.len() + extend, 0xFF);
@@ -109,7 +108,6 @@ impl Signature {
         })
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -222,18 +220,12 @@ mod tests {
     #[test]
     fn byte_string_too_long() {
         let sig = Signature::from_ida_pattern("FFFFFFFFFFFFFFFFF");
-        assert!(matches!(
-            sig.unwrap_err(),
-            ()
-        ));
+        assert!(matches!(sig.unwrap_err(), ()));
     }
 
     #[test]
     fn wildcard_in_multibyte_string() {
         let sig = Signature::from_ida_pattern("FF??");
-        assert!(matches!(
-            sig.unwrap_err(),
-            ()
-        ));
+        assert!(matches!(sig.unwrap_err(), ()));
     }
 }

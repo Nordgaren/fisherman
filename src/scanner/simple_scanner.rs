@@ -1,5 +1,5 @@
-use std::ffi::c_void;
 use crate::scanner::signature::Signature;
+use std::ffi::c_void;
 
 pub struct SimpleScanner;
 // TY https://github.com/vswarte for your scan method in your AoB scanner for Broadsword!

@@ -41,12 +41,8 @@ impl Hook {
             MH_Initialize();
         }
 
-
         for inline_hook in &mut self.inline_hooks {
-            print!(
-                "[+] Hooking function @ {:X?} ",
-                inline_hook.func_addr_obj
-            );
+            print!("[+] Hooking function @ {:X?} ", inline_hook.func_addr_obj);
             inline_hook.get_function_addr();
 
             if inline_hook.hook() {
@@ -68,10 +64,7 @@ impl Hook {
             }
         }
         for inline_hook in &mut self.inline_hooks {
-            print!(
-                "[-] Unhooking function @ {:X?} ",
-                inline_hook.func_addr_obj
-            );
+            print!("[-] Unhooking function @ {:X?} ", inline_hook.func_addr_obj);
 
             if inline_hook.unhook() {
                 print!("Unhooking succeeded!\n");
@@ -86,8 +79,10 @@ impl Hook {
     }
     pub fn check_proc_addr_hook_bytes(&self, key: &[u8]) -> Option<usize> {
         let str = match std::str::from_utf8(key) {
-            Ok(str) => { str }
-            _ => { return None; }
+            Ok(str) => str,
+            _ => {
+                return None;
+            }
         };
         self.proc_addr_hooks.get(str).cloned()
     }

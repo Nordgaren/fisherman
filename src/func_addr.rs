@@ -1,7 +1,7 @@
-use std::ffi::c_void;
 use crate::scanner::signature::{ModuleSignature, Signature};
 use crate::scanner::simple_scanner::SimpleScanner;
 use crate::util::get_module_slice;
+use std::ffi::c_void;
 use std::fmt::Debug;
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 

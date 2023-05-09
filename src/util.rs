@@ -141,8 +141,8 @@ pub(crate) unsafe fn strlenw_with_null(s: *const u16) -> usize {
 // Because you can't use the normal rust copy function in an unmapped PE, for some reason.
 pub(crate) unsafe fn copy_buffer<T>(src: *const T, dst: *mut T, len: usize) {
     let total_size = size_of::<T>() * len;
-    let src_slice = core::slice::from_raw_parts(src as *const u8, total_size);
-    let dst_slice = core::slice::from_raw_parts_mut(dst as *mut u8, total_size);
+    let src_slice = slice::from_raw_parts(src as *const u8, total_size);
+    let dst_slice = slice::from_raw_parts_mut(dst as *mut u8, total_size);
 
     for i in 0..total_size {
         dst_slice[i] = src_slice[i];
@@ -151,7 +151,7 @@ pub(crate) unsafe fn copy_buffer<T>(src: *const T, dst: *mut T, len: usize) {
 
 pub(crate) unsafe fn zero_memory<T>(buffer: *mut T, len: usize) {
     let total_size = size_of::<T>() * len;
-    let dst_slice = core::slice::from_raw_parts_mut(buffer as *mut u8, total_size);
+    let dst_slice = slice::from_raw_parts_mut(buffer as *mut u8, total_size);
 
     for i in 0..total_size {
         dst_slice[i] = 0;
