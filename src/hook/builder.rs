@@ -52,13 +52,13 @@ impl HookBuilder {
     }
     pub fn add_inline_hook<T>(
         mut self,
-        function_address: impl FindFunc + 'static,
+        function_address: impl FindFunc,
         hook_address: usize,
         return_address: &mut T,
+        module_address: Option<usize>,
     ) -> Self {
         unsafe {
-            let mut func_info = function_address.get_func_info().expect(&format!("Could not get function info for {}", hook_address));
-            func_info.module = GetModuleHandleA(PCSTR::from(0 as *const u8)) as *mut c_void;
+            let mut func_info = function_address.get_func_info(module_address).expect(&format!("Could not get function info for {}", hook_address));
             self.hook.inline_hooks.push(InlineHook {
                 func_info,
                 hook_address,

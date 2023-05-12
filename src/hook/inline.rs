@@ -37,27 +37,32 @@ mod tests {
     use crate::hook::builder::HookBuilder;
 
     extern "C" fn some_func(arg: usize) {
-        println!("Original Function! {:X}", arg);
+        println!("[!] Original Function! 0x{:X}", arg);
     }
 
     extern "C" fn hook_func(arg: usize) {
-        println!("Hooked function! {:X}", arg * 2);
+        println!("[!] Hooked function! 0x{:X}", arg * 2);
         unsafe {
             og_some_func(arg / 2);
         }
     }
-    static mut og_some_func: extern "C" fn(usize) = hook_func;
 
+    static mut og_some_func: extern "C" fn(usize) = hook_func;
+    const TEST_VALUE: usize = 0x20;
     #[test]
     fn inline_hook() {
         unsafe {
+            println!("==inline hook test==");
             let mut hook = HookBuilder::new()
-                .add_inline_hook(some_func as usize, hook_func as usize, &mut og_some_func)
+                .add_inline_hook( some_func as usize, hook_func as usize, &mut og_some_func, None)
                 .build();
-
-            some_func(0x20);
+            println!("[?] calling modified function with 0x{:X}. New function value should be doubled. Original function value should be halved.", TEST_VALUE);
+            some_func(TEST_VALUE);
             hook.unhook();
-            some_func(0x20);
+            println!("[?] calling original function, should be original value");
+            some_func(TEST_VALUE);
+            println!("==inline hook test end==");
+            println!();
         }
     }
 }

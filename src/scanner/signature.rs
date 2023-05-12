@@ -1,20 +1,6 @@
 use std::ffi::c_void;
 use std::fmt::{Debug, Formatter};
 
-pub struct ModuleSignature {
-    pub module: usize,
-    pub signature: Signature,
-}
-
-impl ModuleSignature {
-    pub fn from_ida_pattern(pattern: &str, module: usize) -> Result<Self, ()> {
-        Ok(ModuleSignature {
-            module,
-            signature: Signature::from_ida_pattern(pattern).unwrap(),
-        })
-    }
-}
-
 pub struct Signature {
     pub signature: Vec<u8>,
     pub mask: Vec<u8>,
@@ -24,13 +10,6 @@ pub struct Signature {
 impl Debug for Signature {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:X?}", self.signature)?;
-        Ok(())
-    }
-}
-
-impl Debug for ModuleSignature {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:X?}", self.signature.signature)?;
         Ok(())
     }
 }

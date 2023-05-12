@@ -184,6 +184,7 @@ mod tests {
     #[test]
     fn iat_hook() {
         unsafe {
+            println!("==import address table hook test==");
             let original = GetProcAddress(
                 GetModuleHandleA("kernel32.dll\0".as_ptr()),
                 "GetProcAddress\0".as_ptr(),
@@ -199,6 +200,7 @@ mod tests {
             assert_eq!(original as usize, hook.iat_hooks[0].original_address);
 
             HOOK = Some(hook);
+            println!("[?] Calling hooked GetModuleHandleA with 'LoadLibraryA'");
             GetProcAddress(
                 GetModuleHandleA("kernel32.dll\0".as_ptr()),
                 "LoadLibraryA\0".as_ptr(),
@@ -208,10 +210,13 @@ mod tests {
                 hook.unhook();
             }
 
+            println!("[?] Calling original GetModuleHandleA with 'LoadLibraryA'");
             GetProcAddress(
                 GetModuleHandleA("kernel32.dll\0".as_ptr()),
                 "LoadLibraryA\0".as_ptr(),
             );
+            println!("==import address table hook test end==");
+            println!();
         }
     }
 }
