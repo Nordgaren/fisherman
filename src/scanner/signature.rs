@@ -15,23 +15,6 @@ impl ModuleSignature {
     }
 }
 
-impl From<usize> for Signature {
-    fn from(value: usize) -> Self {
-        Signature {
-            signature: vec![],
-            mask: vec![],
-            length: 0,
-            address: Some(value as *mut c_void),
-        }
-    }
-}
-
-impl From<&str> for Signature {
-    fn from(value: &str) -> Self {
-        Signature::from_ida_pattern(value).unwrap()
-    }
-}
-
 pub struct Signature {
     pub signature: Vec<u8>,
     pub mask: Vec<u8>,
