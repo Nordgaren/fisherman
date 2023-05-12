@@ -1,10 +1,13 @@
-use crate::func_addr::FuncAddr;
+use std::ffi::c_void;
+use crate::find_func::FindFunc;
 use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
 use crate::hook::Hook;
 use crate::util::enforce_null_terminated_character;
 use std::mem;
+use windows_sys::core::PCSTR;
+use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 
 #[derive(Default)]
 pub struct HookBuilder {
@@ -49,14 +52,15 @@ impl HookBuilder {
     }
     pub fn add_inline_hook<T>(
         mut self,
-        function_address: impl FuncAddr + 'static,
+        function_address: impl FindFunc + 'static,
         hook_address: usize,
         return_address: &mut T,
     ) -> Self {
         unsafe {
+            let mut func_info = function_address.get_func_info().expect(&format!("Could not get function info for {}", hook_address));
+            func_info.module = GetModuleHandleA(PCSTR::from(0 as *const u8)) as *mut c_void;
             self.hook.inline_hooks.push(InlineHook {
-                func_addr_obj: Box::new(function_address),
-                function_address: None,
+                func_info,
                 hook_address,
                 return_address: mem::transmute(return_address),
             });

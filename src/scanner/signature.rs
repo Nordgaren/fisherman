@@ -19,7 +19,6 @@ pub struct Signature {
     pub signature: Vec<u8>,
     pub mask: Vec<u8>,
     pub length: usize,
-    pub address: Option<*mut c_void>,
 }
 
 impl Debug for Signature {
@@ -87,7 +86,6 @@ impl Signature {
             signature,
             mask,
             length,
-            address: None,
         })
     }
 }

@@ -1,4 +1,4 @@
-pub mod func_addr;
+pub mod find_func;
 pub mod hook;
 mod scanner;
 mod util;
