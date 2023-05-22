@@ -1,24 +1,55 @@
+#![allow(non_camel_case_types)]
+#![allow(unused)]
+
 use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
+use crate::scanner::simple_scanner::SimpleScanner;
+use crate::util::{get_module_slice, get_process_id};
 use minhook_sys::MH_Initialize;
 use std::collections::HashMap;
-use crate::scanner::simple_scanner::SimpleScanner;
-use crate::util::get_module_slice;
+use std::ffi::c_void;
+use std::mem;
+use windows_sys::core::PCSTR;
+use windows_sys::Win32::Foundation::{FALSE, HANDLE};
+#[cfg(target_arch = "x86")]
+use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32;
+#[cfg(target_arch = "x86_64")]
+use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS64;
+
+use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
+use windows_sys::Win32::System::Memory::{
+    VirtualAllocEx, VirtualFreeEx, MEM_COMMIT, MEM_RELEASE, MEM_RESERVE, PAGE_READWRITE,
+};
+use windows_sys::Win32::System::SystemInformation::{GetSystemInfo, SYSTEM_INFO, SYSTEM_INFO_0};
+use windows_sys::Win32::System::SystemServices::IMAGE_DOS_HEADER;
+use windows_sys::Win32::System::Threading::{GetCurrentProcessId, OpenProcess, PROCESS_ALL_ACCESS};
+
+#[cfg(target_arch = "x86")]
+type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS32;
+
+#[cfg(target_arch = "x86_64")]
+type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64;
 
 pub mod builder;
 pub mod eat;
+pub mod func_info;
 pub mod hook_util;
 pub mod iat;
 pub mod inline;
-pub mod func_info;
 
 #[derive(Default)]
 pub struct Hook {
-    pub(crate) eat_hooks: Vec<EATHook>,
+    pub(crate) eat_hooks: EatHooks,
     pub(crate) iat_hooks: Vec<IATHook>,
     pub(crate) inline_hooks: Vec<InlineHook>,
     pub(crate) proc_addr_hooks: HashMap<String, usize>,
+}
+
+#[derive(Default)]
+pub(crate) struct EatHooks {
+    pub(crate) hooks: Vec<EATHook>,
+    pub(crate) forward_string_location: usize,
 }
 
 impl Hook {
@@ -50,10 +81,24 @@ impl Hook {
                 let module_bytes = get_module_slice(inline_hook.func_info.module as usize);
                 if let Some(addr) = SimpleScanner.scan(module_bytes, signature) {
                     inline_hook.func_info.function_address = addr
-                } else { continue }
+                } else {
+                    continue;
+                }
             }
 
             if inline_hook.hook() {
+                print!("Hook succeeded!\n");
+            } else {
+                print!("Hook failed!\n");
+            }
+        }
+
+        self.process_eat_hooks();
+
+        for eat_hook in &mut self.eat_hooks.hooks {
+            print!("[+] Hooking function @ {:?} ", eat_hook.function_name);
+
+            if eat_hook.hook() {
                 print!("Hook succeeded!\n");
             } else {
                 print!("Hook failed!\n");
@@ -72,9 +117,21 @@ impl Hook {
             }
         }
         for inline_hook in &mut self.inline_hooks {
-            print!("[-] Unhooking function @ {:X?} ", inline_hook.func_info.function_address);
+            print!(
+                "[-] Unhooking function @ {:X?} ",
+                inline_hook.func_info.function_address
+            );
 
             if inline_hook.unhook() {
+                print!("Unhooking succeeded!\n");
+            } else {
+                print!("Unhook failed!\n");
+            }
+        }
+        for eat_hook in &mut self.eat_hooks.hooks {
+            print!("[-] Unhooking function @ {:?} ", eat_hook.function_name);
+
+            if eat_hook.unhook() {
                 print!("Unhooking succeeded!\n");
             } else {
                 print!("Unhook failed!\n");
@@ -93,5 +150,77 @@ impl Hook {
             }
         };
         self.proc_addr_hooks.get(str).cloned()
+    }
+    fn process_eat_hooks(&mut self) {
+        let mut module_info_hashmap = HashMap::<&str, usize>::default();
+        for eat_hook in &mut self.eat_hooks.hooks {
+            if module_info_hashmap.contains_key(eat_hook.module_name.as_str()) {
+                *module_info_hashmap
+                    .get_mut(eat_hook.module_name.as_str())
+                    .unwrap() += eat_hook.module_name.len();
+            } else {
+                module_info_hashmap
+                    .insert(eat_hook.module_name.as_str(), eat_hook.module_name.len());
+            }
+        }
+
+        for module_info in module_info_hashmap.iter_mut() {
+            unsafe {
+                let process;
+                let module_name;
+                if module_info.0.len() == 1 {
+                    process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId());
+                    module_name = PCSTR::from(0 as *const u8);
+                } else {
+                    process = OpenProcess(
+                        PROCESS_ALL_ACCESS,
+                        FALSE,
+                        get_process_id(module_info.0.as_bytes()),
+                    );
+                    module_name = PCSTR::from(module_info.0.as_ptr());
+                };
+
+                let module_address = GetModuleHandleA(module_name);
+
+                let dos_header: &IMAGE_DOS_HEADER = mem::transmute(module_address as usize);
+                let nt_headers: &IMAGE_NT_HEADERS =
+                    mem::transmute(module_address as usize + dos_header.e_lfanew as usize);
+
+                let mut system_info = SYSTEM_INFO {
+                    Anonymous: SYSTEM_INFO_0 { dwOemId: 0 },
+                    dwPageSize: 0,
+                    lpMinimumApplicationAddress: 0 as *mut c_void,
+                    lpMaximumApplicationAddress: 0 as *mut c_void,
+                    dwActiveProcessorMask: 0,
+                    dwNumberOfProcessors: 0,
+                    dwProcessorType: 0,
+                    dwAllocationGranularity: 0,
+                    wProcessorLevel: 0,
+                    wProcessorRevision: 0,
+                };
+                GetSystemInfo(&mut system_info);
+
+                let size = *module_info.1 + 0x10; // Reserve space for the actual size of the chunk, and keep the start of the address 16 byte aligned.
+                let address = VirtualAllocEx(
+                    process,
+                    (module_address as usize
+                        + nt_headers.OptionalHeader.SizeOfImage as usize
+                        + system_info.dwAllocationGranularity as usize)
+                        as *const c_void,
+                    size,
+                    MEM_RESERVE | MEM_COMMIT,
+                    PAGE_READWRITE,
+                );
+                //
+                *(address as *mut usize) = *module_info.1;
+                *module_info.1 = address as usize + 0x10;
+                VirtualFreeEx(
+                    module_address as HANDLE,
+                    address,
+                    *(address as *const usize),
+                    MEM_RELEASE,
+                );
+            }
+        }
     }
 }

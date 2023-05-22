@@ -53,7 +53,7 @@ Altogether, you get a builder like this:
   fn hook() {
     unsafe {
         let mut hook = HookBuilder::new()
-            .add_inline_hook(some_func as usize, some_func_hook as usize, &mut og_some_func)
+            .add_inline_hook(some_func as usize, some_func_hook as usize, &mut OG_SOME_FUNC)
             .add_inline_hook(
                 "48 83 EC 28 E8 ?? ?? ?? ?? 48 85 C0 74 08 48 8B 00 48 83 C4 28 C3",
                 get_char_ins_from_handle as usize,

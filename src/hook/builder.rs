@@ -1,4 +1,3 @@
-use std::ffi::c_void;
 use crate::find_func::FindFunc;
 use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
@@ -6,8 +5,6 @@ use crate::hook::inline::InlineHook;
 use crate::hook::Hook;
 use crate::util::enforce_null_terminated_character;
 use std::mem;
-use windows_sys::core::PCSTR;
-use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
 
 #[derive(Default)]
 pub struct HookBuilder {
@@ -41,11 +38,15 @@ impl HookBuilder {
         enforce_null_terminated_character(&mut function);
         let mut forward_string = forward_string.to_owned();
         enforce_null_terminated_character(&mut forward_string);
-        self.hook.eat_hooks.push(EATHook {
-            module,
-            function,
+        self.hook.eat_hooks.hooks.push(EATHook {
+            module_name: module,
+            module_address: 0,
+            function_name: function,
+            function_address: 0,
             forward_string,
+            forward_address: 0,
             original_rva: 0,
+            original_export_dir_size: 0,
         });
 
         self
@@ -58,7 +59,9 @@ impl HookBuilder {
         module_address: Option<usize>,
     ) -> Self {
         unsafe {
-            let mut func_info = function_address.get_func_info(module_address).expect(&format!("Could not get function info for {}", hook_address));
+            let func_info = function_address
+                .get_func_info(module_address)
+                .expect(&format!("Could not get function info for {}", hook_address));
             self.hook.inline_hooks.push(InlineHook {
                 func_info,
                 hook_address,

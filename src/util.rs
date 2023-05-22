@@ -1,13 +1,18 @@
 #![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(unused)]
 
 use std::mem::size_of;
 use std::ptr::addr_of;
 use std::{mem, slice};
-use windows_sys::Win32::Foundation::MAX_PATH;
+use windows_sys::Win32::Foundation::{CloseHandle, INVALID_HANDLE_VALUE, MAX_PATH};
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_DIRECTORY_ENTRY_EXPORT;
 #[cfg(target_arch = "x86")]
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32;
 use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64};
+use windows_sys::Win32::System::Diagnostics::ToolHelp::{
+    CreateToolhelp32Snapshot, Process32First, Process32Next, PROCESSENTRY32, TH32CS_SNAPPROCESS,
+};
 #[cfg(target_arch = "x86_64")]
 use windows_sys::Win32::System::LibraryLoader::LoadLibraryA;
 use windows_sys::Win32::System::SystemServices::{IMAGE_DOS_HEADER, IMAGE_EXPORT_DIRECTORY};
@@ -177,4 +182,43 @@ pub(crate) unsafe fn get_module_slice<'a>(module_handle: usize) -> &'a [u8] {
     } else {
         slice::from_raw_parts(module_handle as *const u8, 0)
     }
+}
+
+pub(crate) unsafe fn get_process_id(procname: &[u8]) -> u32 {
+    let hProcSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+    if INVALID_HANDLE_VALUE == hProcSnap {
+        return 0;
+    }
+
+    let mut pe32 = PROCESSENTRY32 {
+        dwSize: size_of::<PROCESSENTRY32>() as u32,
+        cntUsage: 0,
+        th32ProcessID: 0,
+        th32DefaultHeapID: 0,
+        th32ModuleID: 0,
+        cntThreads: 0,
+        th32ParentProcessID: 0,
+        pcPriClassBase: 0,
+        dwFlags: 0,
+        szExeFile: [0; MAX_PATH as usize],
+    };
+
+    if Process32First(hProcSnap, &mut pe32) == 0 {
+        CloseHandle(hProcSnap);
+        return 0;
+    }
+
+    let mut pid = 0;
+
+    while Process32Next(hProcSnap, &mut pe32) != 0 {
+        if &pe32.szExeFile[..procname.len()] == procname {
+            pid = pe32.th32ProcessID;
+            break;
+        }
+    }
+
+    CloseHandle(hProcSnap);
+
+    pid
 }

@@ -1,11 +1,9 @@
+use crate::hook::func_info::FuncInfo;
 use crate::scanner::signature::Signature;
-use crate::scanner::simple_scanner::SimpleScanner;
-use crate::util::get_module_slice;
 use std::ffi::c_void;
 use std::fmt::Debug;
 use windows_sys::core::PCSTR;
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleA;
-use crate::hook::func_info::FuncInfo;
 
 pub trait FindFunc: Debug {
     fn get_func_info(self, module_address: Option<usize>) -> Result<FuncInfo, ()>;
@@ -49,8 +47,6 @@ fn get_module_address(module_address: Option<usize>) -> *mut c_void {
     if let Some(address) = module_address {
         address as *mut c_void
     } else {
-        unsafe {
-            GetModuleHandleA(0 as PCSTR) as *mut c_void
-        }
+        unsafe { GetModuleHandleA(0 as PCSTR) as *mut c_void }
     }
 }

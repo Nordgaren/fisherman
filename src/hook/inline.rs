@@ -1,8 +1,7 @@
-use crate::find_func::FindFunc;
+use crate::hook::func_info::FuncInfo;
 use minhook_sys::{MH_CreateHook, MH_DisableHook, MH_EnableHook, MH_ERROR_ALREADY_CREATED, MH_OK};
 use std::ffi::c_void;
 use std::mem;
-use crate::hook::func_info::FuncInfo;
 
 pub struct InlineHook {
     pub(crate) func_info: FuncInfo,
@@ -43,18 +42,23 @@ mod tests {
     extern "C" fn hook_func(arg: usize) {
         println!("[!] Hooked function! 0x{:X}", arg * 2);
         unsafe {
-            og_some_func(arg / 2);
+            OG_SOME_FUNC(arg / 2);
         }
     }
 
-    static mut og_some_func: extern "C" fn(usize) = hook_func;
+    static mut OG_SOME_FUNC: extern "C" fn(usize) = hook_func;
     const TEST_VALUE: usize = 0x20;
     #[test]
     fn inline_hook() {
         unsafe {
             println!("==inline hook test==");
             let mut hook = HookBuilder::new()
-                .add_inline_hook( some_func as usize, hook_func as usize, &mut og_some_func, None)
+                .add_inline_hook(
+                    some_func as usize,
+                    hook_func as usize,
+                    &mut OG_SOME_FUNC,
+                    None,
+                )
                 .build();
             println!("[?] calling modified function with 0x{:X}. New function value should be doubled. Original function value should be halved.", TEST_VALUE);
             some_func(TEST_VALUE);

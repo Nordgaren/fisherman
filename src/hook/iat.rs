@@ -1,9 +1,9 @@
 #![allow(non_camel_case_types)]
 
 use crate::hook::hook_util::{get_imported_function_index, get_imported_module_index};
-use std::ffi::{c_char, c_void, CStr};
+use std::ffi::c_void;
 use std::mem::size_of;
-use std::ptr::addr_of_mut;
+use std::ptr::{addr_of_mut, read_unaligned, write_unaligned};
 use windows_sys::Win32::System::Diagnostics::Debug::{
     ImageDirectoryEntryToDataEx, IMAGE_DIRECTORY_ENTRY_IMPORT, IMAGE_SECTION_HEADER,
 };
@@ -36,13 +36,6 @@ impl IATHook {
             size as usize / size_of::<IMAGE_IMPORT_DESCRIPTOR>(),
         );
 
-        // Get the index of the module that contains our function
-        let module_index =
-            get_imported_module_index(base_address, import_address_table, self.module.as_bytes());
-        if module_index == usize::MAX {
-            return false;
-        }
-
         // Get and set the original address.
         self.original_address = GetProcAddress(
             GetModuleHandleA(self.module.as_ptr()),
@@ -50,37 +43,56 @@ impl IATHook {
         )
         .unwrap() as usize;
 
-        let thunk =
-            (base_address + import_address_table[module_index].FirstThunk as usize) as *mut usize;
-        // Search through the entire table by name, in case the function is already hooked.
-        let function_index = get_imported_function_index(
-            base_address,
-            base_address
-                + import_address_table[module_index]
-                    .Anonymous
-                    .OriginalFirstThunk as usize,
-            self.function.as_bytes(),
-        );
-        if function_index == usize::MAX {
+        // Get the index of the module that contains our function
+        let module_indices =
+            get_imported_module_index(base_address, import_address_table, self.module.as_bytes());
+        if module_indices.is_empty() {
             return false;
         }
-        let import_entry_addr = thunk.add(function_index);
-        if *import_entry_addr != self.original_address {
-            // Set the original to this address, in case we want to unhook, later.
-            self.original_address = *import_entry_addr;
-            print!("Previous hook addr: {:X} ", *import_entry_addr)
-        }
-        let mut protect = 0;
-        VirtualProtect(
-            thunk as *const c_void,
-            4096,
-            PAGE_READWRITE,
-            addr_of_mut!(protect),
-        );
-        *import_entry_addr = self.hook_address;
-        VirtualProtect(thunk as *const c_void, 4096, protect, addr_of_mut!(protect));
 
-        true
+        println!("{}", module_indices.len());
+
+        let mut found = false;
+
+        for module_index in module_indices {
+            let thunk = (base_address + import_address_table[module_index].FirstThunk as usize)
+                as *mut usize;
+            // Search through the entire table by name, in case the function is already hooked.
+            let function_indices = get_imported_function_index(
+                base_address,
+                base_address
+                    + import_address_table[module_index]
+                        .Anonymous
+                        .OriginalFirstThunk as usize,
+                self.function.as_bytes(),
+            );
+            println!("{}", function_indices.len());
+
+            if function_indices.is_empty() {
+                continue;
+            }
+
+            found = true;
+            for function_index in function_indices {
+                let import_entry_addr = thunk.add(function_index);
+                if read_unaligned(import_entry_addr) != self.original_address {
+                    // Set the original to this address, in case we want to unhook, later.
+                    self.original_address = *import_entry_addr;
+                    print!("Previous hook addr: {:X} ", *import_entry_addr)
+                }
+                let mut protect = 0;
+                VirtualProtect(
+                    thunk as *const c_void,
+                    4096,
+                    PAGE_READWRITE,
+                    addr_of_mut!(protect),
+                );
+                write_unaligned(import_entry_addr, self.hook_address);
+                VirtualProtect(thunk as *const c_void, 4096, protect, addr_of_mut!(protect));
+            }
+        }
+
+        found
     }
 
     pub unsafe fn unhook(&self) -> bool {
@@ -101,47 +113,53 @@ impl IATHook {
         );
 
         // Get the index of the module that contains our function
-        let module_index =
+        let module_indices =
             get_imported_module_index(base_address, import_address_table, self.module.as_bytes());
-        if module_index == usize::MAX {
+        if module_indices.is_empty() {
             return false;
         }
 
-        let thunk =
-            (base_address + import_address_table[module_index].FirstThunk as usize) as *mut usize;
-        // Search through the entire table by name, in case the function was hooked while our hook
-        // was in place.
-        let function_index = get_imported_function_index(
-            base_address,
-            base_address
-                + import_address_table[module_index]
-                    .Anonymous
-                    .OriginalFirstThunk as usize,
-            self.function.as_bytes(),
-        );
-        if function_index == usize::MAX {
-            return false;
-        }
-        let c_string = CStr::from_ptr(self.function.as_ptr() as *const c_char);
-        let import_entry_addr = thunk.add(function_index);
-        if *import_entry_addr != self.hook_address {
-            print!(
-                "Hook was re-hooked! {:?} New hook addr: {:X} ",
-                c_string, *import_entry_addr
+        let mut found = false;
+        for module_index in module_indices {
+            let thunk = (base_address + import_address_table[module_index].FirstThunk as usize)
+                as *mut usize;
+            // Search through the entire table by name, in case the function was hooked while our hook
+            // was in place.
+            let function_indices = get_imported_function_index(
+                base_address,
+                base_address
+                    + import_address_table[module_index]
+                        .Anonymous
+                        .OriginalFirstThunk as usize,
+                self.function.as_bytes(),
             );
-            return false;
-        }
-        let mut protect = 0;
-        VirtualProtect(
-            thunk as *const c_void,
-            4096,
-            PAGE_READWRITE,
-            addr_of_mut!(protect),
-        );
-        *import_entry_addr = self.original_address;
-        VirtualProtect(thunk as *const c_void, 4096, protect, addr_of_mut!(protect));
+            if function_indices.is_empty() {
+                continue;
+            }
 
-        true
+            found = true;
+
+            for function_index in function_indices {
+                let import_entry_addr = thunk.add(function_index);
+                if read_unaligned(import_entry_addr) != self.hook_address {
+                    print!(
+                        "Hook was re-hooked! {:?} New hook addr: {:X} ",
+                        self.function, *import_entry_addr
+                    );
+                    return false;
+                }
+                let mut protect = 0;
+                VirtualProtect(
+                    thunk as *const c_void,
+                    4096,
+                    PAGE_READWRITE,
+                    addr_of_mut!(protect),
+                );
+                write_unaligned(import_entry_addr, self.original_address);
+                VirtualProtect(thunk as *const c_void, 4096, protect, addr_of_mut!(protect));
+            }
+        }
+        found
     }
 }
 

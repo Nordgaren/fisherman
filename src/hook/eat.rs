@@ -20,21 +20,30 @@ type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64;
 type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS32;
 
 pub struct EATHook {
-    pub(crate) module: String,
-    pub(crate) function: String,
+    pub module_name: String,
+    pub(crate) module_address: usize,
+    pub function_name: String,
+    pub(crate) function_address: usize,
     pub(crate) forward_string: String,
+    pub(crate) forward_address: usize,
     pub(crate) original_rva: u32,
+    pub(crate) original_export_dir_size: u32,
 }
 
 impl EATHook {
     pub unsafe fn hook(&mut self) -> bool {
-        let base_address = GetModuleHandleA(self.module.as_ptr()) as usize;
+        let base_address = self.module_address;
         let dos_header: &'static IMAGE_DOS_HEADER = mem::transmute(base_address);
         let nt_headers: &'static mut IMAGE_NT_HEADERS =
             mem::transmute(base_address + dos_header.e_lfanew as usize);
         let optional_header = &mut nt_headers.OptionalHeader;
         let mut export_data_directory =
             &mut optional_header.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT as usize];
+
+        if self.original_export_dir_size == 0 {
+            self.original_export_dir_size = export_data_directory.Size;
+        }
+
         let export_directory: &'static IMAGE_EXPORT_DIRECTORY =
             mem::transmute(base_address + export_data_directory.VirtualAddress as usize);
 
@@ -54,7 +63,7 @@ impl EATHook {
             let string_address = (base_address + name_table[i] as usize) as *const u8;
             let name = core::slice::from_raw_parts(string_address, strlen(string_address));
 
-            if name == self.function.as_bytes() {
+            if name == self.function_name.as_bytes() {
                 let mut protect = 0;
                 VirtualProtect(
                     addr_of!(*export_directory) as *const c_void,
@@ -78,7 +87,6 @@ impl EATHook {
 
                 self.original_rva = eat_array[hints_table[i] as usize];
 
-                let mut protect = 0;
                 eat_array[hints_table[i] as usize] = (forward_ptr - base_address) as u32;
                 copy_buffer(
                     self.forward_string.as_ptr(),
@@ -101,7 +109,7 @@ impl EATHook {
     }
 
     pub unsafe fn unhook(&mut self) -> bool {
-        let base_address = GetModuleHandleA(self.module.as_ptr()) as usize;
+        let base_address = GetModuleHandleA(self.module_name.as_ptr()) as usize;
         let dos_header: &'static IMAGE_DOS_HEADER = mem::transmute(base_address);
         let nt_headers: &'static mut IMAGE_NT_HEADERS =
             mem::transmute(base_address + dos_header.e_lfanew as usize);
@@ -127,7 +135,7 @@ impl EATHook {
             let string_address = (base_address + name_table[i] as usize) as *const u8;
             let name = core::slice::from_raw_parts(string_address, strlen(string_address));
 
-            if name == self.function.as_bytes() {
+            if name == self.function_name.as_bytes() {
                 let mut protect = 0;
                 VirtualProtect(
                     addr_of!(*export_directory) as *const c_void,
@@ -167,3 +175,14 @@ impl EATHook {
         false
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use crate::hook::builder::HookBuilder;
+//     use std::collections::HashMap;
+//
+//     #[test]
+//     fn eat_hook() {
+//
+//     }
+// }
