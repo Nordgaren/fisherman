@@ -50,8 +50,6 @@ impl IATHook {
             return false;
         }
 
-        println!("{}", module_indices.len());
-
         let mut found = false;
 
         for module_index in module_indices {
@@ -66,7 +64,6 @@ impl IATHook {
                         .OriginalFirstThunk as usize,
                 self.function.as_bytes(),
             );
-            println!("{}", function_indices.len());
 
             if function_indices.is_empty() {
                 continue;

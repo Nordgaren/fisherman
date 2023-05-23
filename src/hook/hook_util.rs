@@ -43,7 +43,6 @@ pub(super) unsafe fn get_imported_module_index(
         );
 
         if case_insensitive_compare_strs_as_bytes(name, module_name) {
-            println!("Found!");
             indicies.push(i);
         }
     }
