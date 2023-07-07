@@ -205,6 +205,7 @@ mod tests {
                 "GetProcAddress\0".as_ptr(),
             )
             .unwrap();
+
             let hook = HookBuilder::new()
                 .add_iat_hook(
                     "KERNEL32.dll",

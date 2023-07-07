@@ -163,7 +163,7 @@ pub(crate) unsafe fn zero_memory<T>(buffer: *mut T, len: usize) {
     }
 }
 
-pub(crate) unsafe fn get_module_slice<'a>(module_handle: usize) -> &'a [u8] {
+pub unsafe fn get_module_slice<'a>(module_handle: usize) -> &'a [u8] {
     let dos_header: &IMAGE_DOS_HEADER = mem::transmute(module_handle);
     let nt_header_address = module_handle + dos_header.e_lfanew as usize;
     let machine = (nt_header_address + 4) as *const u16;

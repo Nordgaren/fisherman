@@ -223,4 +223,13 @@ impl Hook {
             }
         }
     }
+    pub fn get_original_func_addr_iat(&self, function_name: &str) -> Option<usize> {
+        for hook in &self.iat_hooks {
+            if hook.function == function_name {
+                return Some(hook.original_address);
+            }
+        }
+
+        None
+    }
 }
