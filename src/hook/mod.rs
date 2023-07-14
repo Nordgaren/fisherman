@@ -63,7 +63,7 @@ impl Hook {
     }
     pub unsafe fn hook(&mut self) {
         for iat_hook in &mut self.iat_hooks {
-            print!("[+] Hooking function: {}", iat_hook.function);
+            print!("[+] IAT Hooking function: {}", iat_hook.function);
 
             if iat_hook.hook() {
                 print!("Hook succeeded!\n");
@@ -76,7 +76,7 @@ impl Hook {
         }
 
         for inline_hook in &mut self.inline_hooks {
-            print!("[+] Hooking function @ {:X?} ", inline_hook.hook_address);
+            print!("[+] Inline Hooking function @ {:X} ", inline_hook.func_info.function_address as usize);
             if let Some(signature) = &mut inline_hook.func_info.signature {
                 let module_bytes = get_module_slice(inline_hook.func_info.module as usize);
                 if let Some(addr) = SimpleScanner.scan(module_bytes, signature) {
@@ -96,7 +96,7 @@ impl Hook {
         self.process_eat_hooks();
 
         for eat_hook in &mut self.eat_hooks.hooks {
-            print!("[+] Hooking function @ {:?} ", eat_hook.function_name);
+            print!("[+] EAT Hooking function @ {:?} ", eat_hook.function_name);
 
             if eat_hook.hook() {
                 print!("Hook succeeded!\n");
@@ -108,7 +108,7 @@ impl Hook {
 
     pub unsafe fn unhook(&mut self) {
         for iat_hook in &self.iat_hooks {
-            print!("[-] Unhooking function: {} ", iat_hook.function);
+            print!("[-] Unhooking IAT hook: {} ", iat_hook.function);
 
             if iat_hook.unhook() {
                 print!("Unhooking succeeded!\n");
@@ -118,8 +118,8 @@ impl Hook {
         }
         for inline_hook in &mut self.inline_hooks {
             print!(
-                "[-] Unhooking function @ {:X?} ",
-                inline_hook.func_info.function_address
+                "[-] Unhooking Inline hook @ {:X} ",
+                inline_hook.func_info.function_address as usize
             );
 
             if inline_hook.unhook() {
@@ -129,7 +129,7 @@ impl Hook {
             }
         }
         for eat_hook in &mut self.eat_hooks.hooks {
-            print!("[-] Unhooking function @ {:?} ", eat_hook.function_name);
+            print!("[-] Unhooking EAT hook @ {:?} ", eat_hook.function_name);
 
             if eat_hook.unhook() {
                 print!("Unhooking succeeded!\n");
