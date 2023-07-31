@@ -226,7 +226,7 @@ pub(crate) unsafe fn get_process_id(procname: &[u8]) -> u32 {
 
 pub unsafe fn get_relative_pointer<T>(addr: usize, offset: usize, size: usize) -> *const T {
     let offset = (addr + offset) as *const u32;
-    let ptr = addr + (*offset) as usize + size;
+    let ptr = addr + offset.read_unaligned() as usize + size;
     ptr as *const T
 }
 
