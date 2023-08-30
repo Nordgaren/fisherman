@@ -5,7 +5,7 @@ use crate::hook::eat::EATHook;
 use crate::hook::iat::IATHook;
 use crate::hook::inline::InlineHook;
 use crate::scanner::simple_scanner::SimpleScanner;
-use crate::util::{get_module_slice, get_process_id};
+use crate::util::{enforce_null_terminated_character, get_module_slice, get_process_id};
 use minhook_sys::MH_Initialize;
 use std::collections::HashMap;
 use std::ffi::c_void;
@@ -227,8 +227,10 @@ impl Hook {
         }
     }
     pub fn get_original_func_addr_iat(&self, function_name: &str) -> Option<usize> {
+        let mut name = function_name.to_string();
+        enforce_null_terminated_character(&mut name);
         for hook in &self.iat_hooks {
-            if hook.function == function_name {
+            if hook.function == name {
                 return Some(hook.original_address);
             }
         }
