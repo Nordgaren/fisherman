@@ -76,7 +76,10 @@ impl Hook {
         }
 
         for inline_hook in &mut self.inline_hooks {
-            print!("[+] Inline Hooking function @ {:X} ", inline_hook.func_info.function_address as usize);
+            print!(
+                "[+] Inline Hooking function @ {:X} ",
+                inline_hook.func_info.function_address as usize
+            );
             if let Some(signature) = &mut inline_hook.func_info.signature {
                 let module_bytes = get_module_slice(inline_hook.func_info.module as usize);
                 if let Some(addr) = SimpleScanner.scan(module_bytes, signature) {

@@ -10,7 +10,7 @@ pub(super) unsafe fn get_imported_function_index(
     let mut indicies = vec![];
     let mut thunk = original_thunk as *const usize;
     let mut i = 0;
-    while read_unaligned(thunk) != 0 {
+    while thunk.read_unaligned() != 0 {
         let import: &IMAGE_IMPORT_BY_NAME =
             std::mem::transmute(base_address + read_unaligned(thunk));
         let name = std::slice::from_raw_parts(
