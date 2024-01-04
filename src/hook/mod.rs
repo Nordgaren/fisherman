@@ -76,19 +76,21 @@ impl Hook {
         }
 
         for inline_hook in &mut self.inline_hooks {
-            print!(
-                "[+] Inline Hooking function @ {:X} ",
-                inline_hook.func_info.function_address as usize
-            );
             if let Some(signature) = &mut inline_hook.func_info.signature {
                 let module_bytes = get_module_slice(inline_hook.func_info.module as usize);
                 if let Some(addr) = SimpleScanner.scan(module_bytes, signature) {
-                    inline_hook.func_info.function_address = addr
+                    inline_hook.func_info.function_address =
+                        inline_hook.func_info.module.add(addr as usize)
                 } else {
+                    print!("[!] Scan failed for signature: {:X?} ", signature);
                     continue;
                 }
             }
 
+            print!(
+                "[+] Inline Hooking function @ {:X?} ",
+                inline_hook.func_info.function_address
+            );
             if inline_hook.hook() {
                 print!("Hook succeeded!\n");
             } else {
