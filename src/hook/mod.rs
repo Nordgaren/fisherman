@@ -32,7 +32,7 @@ type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS32;
 type IMAGE_NT_HEADERS = IMAGE_NT_HEADERS64;
 
 pub mod builder;
-pub mod eat;
+mod eat;
 pub mod func_info;
 pub mod hook_util;
 pub mod iat;
@@ -156,19 +156,22 @@ impl Hook {
         };
         self.proc_addr_hooks.get(str).cloned()
     }
+    // This is still very unfinished. I basically need to allocate a new string
     fn process_eat_hooks(&mut self) {
         let mut module_info_hashmap = HashMap::<&str, usize>::default();
+        // Get the size of the chunk we need to allocate, which will basically be where we store all the forward strings.
+        // I think I also need to add the name of the module we are forwarding to (probably this module, so I can get that
+        // from some windows API calls.
         for eat_hook in &mut self.eat_hooks.hooks {
-            if module_info_hashmap.contains_key(eat_hook.module_name.as_str()) {
-                *module_info_hashmap
-                    .get_mut(eat_hook.module_name.as_str())
-                    .unwrap() += eat_hook.module_name.len();
+            if let Some(size) = module_info_hashmap.get_mut(eat_hook.module_name.as_str()) {
+                *size += eat_hook.function_name.len();
             } else {
                 module_info_hashmap
-                    .insert(eat_hook.module_name.as_str(), eat_hook.module_name.len());
+                    .insert(eat_hook.module_name.as_str(), eat_hook.function_name.len());
             }
         }
 
+        // Go over each module and setup the chunks. Tag the chunks with the size, so we have it for slices, and for deallocation.
         for module_info in module_info_hashmap.iter_mut() {
             unsafe {
                 let process;
@@ -216,15 +219,10 @@ impl Hook {
                     MEM_RESERVE | MEM_COMMIT,
                     PAGE_READWRITE,
                 );
-                //
+                // Write the size of the chunk to the start of the the chunk.
                 *(address as *mut usize) = *module_info.1;
+                // Write the start of the chunk address to the usize in the hashmap.
                 *module_info.1 = address as usize + 0x10;
-                VirtualFreeEx(
-                    module_address as HANDLE,
-                    address,
-                    *(address as *const usize),
-                    MEM_RELEASE,
-                );
             }
         }
     }

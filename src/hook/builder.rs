@@ -31,7 +31,7 @@ impl HookBuilder {
 
         self
     }
-    pub fn add_eat_hook(mut self, module: &str, function: &str, forward_string: &str) -> Self {
+    fn add_eat_hook(mut self, module: &str, function: &str, forward_string: &str) -> Self {
         let mut module = module.to_owned();
         enforce_null_terminated_character(&mut module);
         let mut function = function.to_owned();
