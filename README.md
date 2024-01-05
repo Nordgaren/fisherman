@@ -35,16 +35,16 @@ takes in a slice, while the non bytes version takes a &str. That is the only dif
 ## Example
 ```rust
 static mut HOOK: Option<Hook> = None; 
-...
-// inside get_proc_address_hook
-let c_string = CStr::from_ptr(proc_name as *const c_char);
-println!("[!] GetProcAddress function: {:X?}", c_string);
-if let Some(hook) = &HOOK {
-     if let Some(addr) = hook.check_proc_addr_hook_bytes(c_string.to_bytes_with_nul()) {
-         return addr;
-     }
+
+extern "system" fn get_proc_address_hook(module_handle: usize, proc_name: *const c_char) {
+    let c_string = CStr::from_ptr(proc_name as *const c_char);
+    println!("[!] GetProcAddress function: {:X?}", c_string);
+    if let Some(hook) = &HOOK {
+        if let Some(addr) = hook.check_proc_addr_hook_bytes(c_string.to_bytes_with_nul()) {
+            return addr;
+        }
+    }
 }
-...
 ```
 
 Altogether, you get a builder like this:

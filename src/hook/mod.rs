@@ -171,21 +171,21 @@ impl Hook {
             }
         }
 
-        // Go over each module and setup the chunks. Tag the chunks with the size, so we have it for slices, and for deallocation.
-        for module_info in module_info_hashmap.iter_mut() {
+        // Go over each module and setup the chunks. Tag the chunks with the size, so we have it for slices, and for de-allocation.
+        for (string, size_ptr) in module_info_hashmap.iter_mut() {
             unsafe {
                 let process;
                 let module_name;
-                if module_info.0.len() == 1 {
+                if string.len() == 0 {
                     process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId());
                     module_name = PCSTR::from(0 as *const u8);
                 } else {
                     process = OpenProcess(
                         PROCESS_ALL_ACCESS,
                         FALSE,
-                        get_process_id(module_info.0.as_bytes()),
+                        get_process_id(string.as_bytes()),
                     );
-                    module_name = PCSTR::from(module_info.0.as_ptr());
+                    module_name = PCSTR::from(string.as_ptr());
                 };
 
                 let module_address = GetModuleHandleA(module_name);
@@ -208,7 +208,7 @@ impl Hook {
                 };
                 GetSystemInfo(&mut system_info);
 
-                let size = *module_info.1 + 0x10; // Reserve space for the actual size of the chunk, and keep the start of the address 16 byte aligned.
+                let size = *size_ptr + 0x10; // Reserve space for the actual size of the chunk, and keep the start of the address 16 byte aligned.
                 let address = VirtualAllocEx(
                     process,
                     (module_address as usize
@@ -220,9 +220,9 @@ impl Hook {
                     PAGE_READWRITE,
                 );
                 // Write the size of the chunk to the start of the the chunk.
-                *(address as *mut usize) = *module_info.1;
+                *(address as *mut usize) = *size_ptr;
                 // Write the start of the chunk address to the usize in the hashmap.
-                *module_info.1 = address as usize + 0x10;
+                *size_ptr = address as usize + 0x10;
             }
         }
     }
