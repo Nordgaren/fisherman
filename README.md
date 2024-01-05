@@ -29,9 +29,8 @@ do not need to worry about it.
 ***You MUST have GetProcAddress hooked in some way for this to work.***
 
 This will allow you to redirect any function calls that go through GetProcAddress on the targeted module.  
-You will need to make a static mut variable to hold the hook. I may change to to not require the null terminator, for
-this particular hook, but I am not sure, yet.  
-
+You will need to make a static mut variable to hold the hook. the `check_proc_addr_hook_bytes` function on the hook
+takes in a slice, while the non bytes version takes a &str. That is the only difference.  
 
 ## Example
 ```rust
@@ -54,11 +53,6 @@ Altogether, you get a builder like this:
     unsafe {
         let mut hook = HookBuilder::new()
             .add_inline_hook(some_func as usize, some_func_hook as usize, &mut OG_SOME_FUNC)
-            .add_inline_hook(
-                "48 83 EC 28 E8 ?? ?? ?? ?? 48 85 C0 74 08 48 8B 00 48 83 C4 28 C3",
-                get_char_ins_from_handle as usize,
-                &mut og_get_char_ins_from_handle,
-            )
             .add_iat_hook(
                 "KERNEL32.dll",
                 "GetProcAddress",
