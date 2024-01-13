@@ -7,8 +7,6 @@ use std::ptr::addr_of;
 use std::{mem, slice};
 use windows_sys::Win32::Foundation::{CloseHandle, INVALID_HANDLE_VALUE, MAX_PATH};
 use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_DIRECTORY_ENTRY_EXPORT;
-#[cfg(target_arch = "x86")]
-use windows_sys::Win32::System::Diagnostics::Debug::IMAGE_NT_HEADERS32;
 use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64};
 use windows_sys::Win32::System::Diagnostics::ToolHelp::{
     CreateToolhelp32Snapshot, Process32First, Process32Next, PROCESSENTRY32, TH32CS_SNAPPROCESS,
