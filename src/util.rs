@@ -11,8 +11,6 @@ use windows_sys::Win32::System::Diagnostics::Debug::{IMAGE_NT_HEADERS32, IMAGE_N
 use windows_sys::Win32::System::Diagnostics::ToolHelp::{
     CreateToolhelp32Snapshot, Process32First, Process32Next, PROCESSENTRY32, TH32CS_SNAPPROCESS,
 };
-#[cfg(target_arch = "x86_64")]
-use windows_sys::Win32::System::LibraryLoader::LoadLibraryA;
 use windows_sys::Win32::System::SystemServices::{IMAGE_DOS_HEADER, IMAGE_EXPORT_DIRECTORY};
 
 #[cfg(target_arch = "x86_64")]
